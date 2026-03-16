@@ -110,7 +110,6 @@
 </div>
 
 
-
 <script>
 const API='https://script.google.com/macros/s/AKfycbzWU3DzJHBsMXXAtYU4E2wY_23iPXd2EdVBEZ6KTn2hjZYATQYXQywJDuKXeiIUcO_kjQ/exec';
 let reportTypes=[], hubSettings={}, isAdmin=false;
@@ -125,10 +124,10 @@ async function load(){
     const r=await fetch(API+'?action=list_report_types',{redirect:'follow'});
     const j=await r.json();
     if(j.status==='ok'){
-      reportTypes=j.report_types||[]; 
+      reportTypes=j.report_types||[];
       hubSettings=j.hub_settings||{};
-      document.getElementById('schoolTitle').textContent='ระบบรายงานออนไลน์'+(hubSettings.school_name?'
-'+hubSettings.school_name:'');
+      // แก้ไขจุดที่ 1: เปลี่ยนบรรทัดใหม่เป็น \n
+      document.getElementById('schoolTitle').textContent='ระบบรายงานออนไลน์'+(hubSettings.school_name?'\n'+hubSettings.school_name:'');
       renderGrid();
       syncRegistrationButton();
       if(isAdmin) {
@@ -349,10 +348,9 @@ async function createReportType(){
   }catch(e){document.getElementById('createErr').textContent=e.message}
 }
 
+// แก้ไขจุดที่ 2: เปลี่ยนบรรทัดใหม่ในการ Confirm ให้เป็น \n\n
 async function deleteRT(slug,title){
-  if(!confirm('⚠️ ลบ "'+title+'" ('+slug+')?
-
-ทั้งโฟลเดอร์ ข้อมูลครู และรูปจะถูกลบ!'))return;
+  if(!confirm('⚠️ ลบ "'+title+'" ('+slug+')?\n\nทั้งโฟลเดอร์ ข้อมูลครู และรูปจะถูกลบ!'))return;
   toast('🗑️ กำลังลบ...');
   try{
     const r=await fetch(API,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'delete_report_type',slug})});
@@ -384,8 +382,7 @@ async function saveHubSettings(){
   }catch(e){toast('❌ '+e.message)}
 }
 
-function openRegister(){
-  ['rName','rTeacherId','rPassword','rPhone','rEmail'].forEach(id=>document.getElementById(id).value='');
+function openRegister(){['rName','rTeacherId','rPassword','rPhone','rEmail'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('registerErr').textContent='';
   op('mRegister');
 }
@@ -410,6 +407,7 @@ function toast(m){const t=document.getElementById('toast');t.textContent=m;t.cla
 function op(id){document.getElementById(id).classList.add('show');if(id==='mAdmin'){document.getElementById('adminPw').value='';document.getElementById('adminErr').textContent=''}}
 function cl(id){document.getElementById(id).classList.remove('show')}
 </script>
+
 
 </body>
 </html>
