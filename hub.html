@@ -398,7 +398,15 @@ async function loadPendingUsers() {
     }
     let html = '<div class="card"><div class="ct"><h3>ผู้สมัครรออนุมัติ</h3></div><div class="cbody"><div style="overflow:auto"><table style="width:100%;border-collapse:collapse"><thead><tr><th align="left" style="padding:8px;border-bottom:1px solid #e5e7eb">ชื่อ</th><th align="left" style="padding:8px;border-bottom:1px solid #e5e7eb">ID</th><th align="left" style="padding:8px;border-bottom:1px solid #e5e7eb">โทร</th><th align="left" style="padding:8px;border-bottom:1px solid #e5e7eb">อีเมล</th><th align="left" style="padding:8px;border-bottom:1px solid #e5e7eb">จัดการ</th></tr></thead><tbody>';
     j.users.forEach(u => {
-      html += `<tr><td style="padding:8px;border-bottom:1px solid #f1f5f9">${esc(u.full_name || '')}</td><td style="padding:8px;border-bottom:1px solid #f1f5f9">${esc(u.teacher_id || '')}</td><td style="padding:8px;border-bottom:1px solid #f1f5f9">${esc(u.phone || '')}</td><td style="padding:8px;border-bottom:1px solid #f1f5f9">${esc(u.email || '')}</td><td style="padding:8px;border-bottom:1px solid #f1f5f9"><button class="btn btn-primary btn-sm" onclick="approveUser('${esc(u.teacher_id || '')}')">อนุมัติ</button> <button class="btn btn-danger btn-sm" onclick="suspendUser('${esc(u.teacher_id || '')}')">ระงับ</button></td></tr>`;
+      html += `<tr><td style="padding:8px;border-bottom:1px solid #f1f5f9">${esc(u.full_name || '')}</td><td style="padding:8px;border-bottom:1px solid #f1f5f9">${esc(u.teacher_id || '')}</td><td style="padding:8px;border-bottom:1px solid #f1f5f9">${esc(u.phone || '')}</td><td style="padding:8px;border-bottom:1px solid #f1f5f9">${esc(u.email || '')}</td>
+<td style="padding:8px;border-bottom:1px solid #f1f5f9">
+  <div style="display:flex;gap:6px;flex-wrap:wrap">
+    <button class="btn btn-ghost btn-sm" onclick="approveOnly('${esc(u.teacher_id || '')}')">อนุมัติอย่างเดียว</button>
+    <button class="btn btn-primary btn-sm" onclick="approveAndPublish('${esc(u.teacher_id || '')}')">อนุมัติและเผยแพร่</button>
+    <button class="btn btn-danger btn-sm" onclick="suspendUser('${esc(u.teacher_id || '')}')">ระงับ</button>
+  </div>
+</td>      
+      </tr>`;
     });
     html += '</tbody></table></div></div></div>';
     area.innerHTML = html;
@@ -428,7 +436,7 @@ async function loadAdminUsers() {
   }
 }
 
-async function approveUser(teacherId) {
+async function approveOnly(teacherId) {
   try {
     const r = await fetch(API, {
       method: 'POST',
@@ -438,7 +446,37 @@ async function approveUser(teacherId) {
         data: {
           teacher_id: teacherId,
           hub_slug: REPORT_TYPE,
-          is_visible: true
+          auto_visible: false
+        }
+      })
+    });
+
+    const j = await r.json();
+
+    toast(j.status === 'ok'
+      ? '✅ อนุมัติแล้ว (ยังไม่เผยแพร่)'
+      : '❌ ' + (j.message || 'เกิดข้อผิดพลาด')
+    );
+
+    await loadPendingUsers();
+    await loadAdminUsers();
+    await loadTeachers();
+  } catch (e) {
+    toast('❌ ' + e.message);
+  }
+}
+
+async function approveAndPublish(teacherId) {
+  try {
+    const r = await fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({
+        action: 'approve_user',
+        data: {
+          teacher_id: teacherId,
+          hub_slug: REPORT_TYPE,
+          auto_visible: true
         }
       })
     });
