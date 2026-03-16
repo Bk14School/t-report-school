@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ระบบรายงานออนไลน์ — โรงเรียนบ้านคลอง 14</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--e1:#0c3b2e;--e2:#145a3e;--e3:#1a7a54;--e4:#22a06b;--e5:#57d9a3;--e6:#b3f5d4;--e7:#e3fcef;--e8:#f4fdf8;--g1:#6b4f17;--g2:#a67c2e;--g3:#d4a843;--g4:#f0c75e;--g5:#f9e39f;--g6:#fef3cd;--n1:#1a1d23;--n2:#2d3139;--n3:#464c57;--n4:#6b7280;--n5:#9ca3af;--n6:#d1d5db;--n7:#e8ecf0;--n8:#f3f5f8;--n9:#fafbfc;--bg:#f7f9f8;--card:#fff;--red:#e74c3c;--shadow-sm:0 2px 8px rgba(12,59,46,.06);--shadow-md:0 8px 24px rgba(12,59,46,.08);--shadow-lg:0 16px 48px rgba(12,59,46,.1);--r:20px;--rs:12px;--rx:8px;--ease:.3s cubic-bezier(.4,0,.2,1);--bounce:.5s cubic-bezier(.34,1.56,.64,1)}
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--n1);line-height:1.8;font-size:15px;-webkit-font-smoothing:antialiased;overflow-x:hidden}::selection{background:var(--e6);color:var(--e1)}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}@keyframes fadeUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}@keyframes scaleIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}@keyframes pulse-ring{0%{box-shadow:0 0 0 0 rgba(34,160,107,.4)}70%{box-shadow:0 0 0 12px rgba(34,160,107,0)}100%{box-shadow:0 0 0 0 rgba(34,160,107,0)}}
+.hero{background:var(--e1);position:relative;overflow:hidden;min-height:340px}.hero-bg{position:absolute;inset:0;overflow:hidden}.hero-bg .orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:.12}.orb-1{width:500px;height:500px;background:var(--e4);top:-150px;right:-80px;animation:float 8s ease infinite}.orb-2{width:400px;height:400px;background:var(--g3);bottom:-120px;left:-60px;animation:float 10s ease infinite 2s}.orb-3{width:250px;height:250px;background:var(--e5);top:40%;left:40%;animation:float 14s ease infinite 4s}.hero-pattern{position:absolute;inset:0;opacity:.03;background-image:repeating-linear-gradient(45deg,transparent,transparent 35px,rgba(255,255,255,.5) 35px,rgba(255,255,255,.5) 36px)}
+.hi{max-width:960px;margin:0 auto;padding:72px 32px 64px;position:relative;z-index:1;color:#fff;text-align:center}
+.hero-logo{width:88px;height:88px;background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.1);border-radius:24px;display:inline-flex;align-items:center;justify-content:center;backdrop-filter:blur(12px);animation:float 6s ease infinite;margin-bottom:24px}.hero-logo img{width:60px;height:60px;object-fit:contain}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);padding:8px 22px;border-radius:28px;font-size:12px;backdrop-filter:blur(8px);letter-spacing:.5px;margin-bottom:20px}.hero-badge .dot{width:8px;height:8px;border-radius:50%;background:var(--e5);box-shadow:0 0 10px var(--e5);animation:pulse-ring 2s infinite}
+.hero h1{font-family:'Prompt',sans-serif;font-size:clamp(28px,6vw,48px);font-weight:800;line-height:1.15;margin-bottom:12px;letter-spacing:-.5px;background:linear-gradient(135deg,#fff 20%,var(--e6) 50%,var(--g4) 80%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub{font-size:16px;opacity:.6;font-weight:300;max-width:560px;margin:0 auto;line-height:1.7}
+.mn{max-width:960px;margin:-48px auto 0;padding:0 32px 100px;position:relative;z-index:10}
+.section-label{font-family:'Prompt',sans-serif;font-size:12px;font-weight:600;color:var(--e3);text-transform:uppercase;letter-spacing:2px;margin-bottom:20px;display:flex;align-items:center;gap:10px}.section-label::after{content:'';flex:1;height:1px;background:var(--e7)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:24px;margin-bottom:48px}
+.rcard{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow-sm);border:1px solid var(--n7);overflow:hidden;transition:var(--ease);cursor:pointer;position:relative;text-decoration:none;color:inherit;display:block;animation:fadeUp .6s ease both}.rcard:nth-child(1){animation-delay:.05s}.rcard:nth-child(2){animation-delay:.12s}.rcard:nth-child(3){animation-delay:.19s}.rcard:nth-child(4){animation-delay:.26s}.rcard:nth-child(5){animation-delay:.33s}.rcard:nth-child(6){animation-delay:.4s}
+.rcard:hover{box-shadow:var(--shadow-lg);transform:translateY(-6px);border-color:var(--e5)}
+.rcard-banner{height:8px;width:100%}
+.rcard-body{padding:28px 24px 20px}
+.rcard-icon{width:56px;height:56px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:16px;box-shadow:0 4px 16px rgba(0,0,0,.06)}
+.rcard-body h3{font-family:'Prompt',sans-serif;font-size:18px;font-weight:600;color:var(--e1);margin-bottom:6px;line-height:1.3}
+.rcard-body p{font-size:13px;color:var(--n4);font-weight:300;line-height:1.7;margin-bottom:16px;min-height:40px}
+.rcard-footer{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:var(--n9);border-top:1px solid var(--n7)}
+.rcard-tag{font-size:11px;color:var(--n5);font-family:'Prompt',sans-serif;display:flex;align-items:center;gap:6px}
+.rcard-arrow{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--e1),var(--e3));color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;transition:var(--bounce);box-shadow:0 4px 12px rgba(12,59,46,.2)}.rcard:hover .rcard-arrow{transform:translateX(4px) scale(1.1)}
+.add-card{background:var(--card);border-radius:var(--r);border:2px dashed var(--n6);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 24px;cursor:pointer;transition:var(--ease);text-decoration:none;color:var(--n4);min-height:220px;animation:fadeUp .6s ease both;animation-delay:.45s}.add-card:hover{border-color:var(--e4);background:var(--e8);color:var(--e2);transform:translateY(-4px)}.add-card .plus{width:48px;height:48px;border-radius:50%;background:var(--n8);display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:12px;transition:var(--ease)}.add-card:hover .plus{background:var(--e7)}.add-card span{font-family:'Prompt',sans-serif;font-size:14px;font-weight:500}
+.footer-info{text-align:center;padding:40px 20px;color:var(--n5);font-size:12px;line-height:1.8}.footer-info a{color:var(--e3);text-decoration:none}.footer-info a:hover{text-decoration:underline}
+@media(max-width:768px){.hi{padding:52px 20px 48px}.mn{padding:0 18px 60px;margin-top:-32px}.grid{grid-template-columns:1fr}.hero h1{font-size:28px}}
+@media(max-width:480px){.hi{padding:36px 14px 32px}.mn{padding:0 10px 40px;margin-top:-24px}.hero-logo{width:68px;height:68px;border-radius:18px}.hero-logo img{width:46px;height:46px}.rcard-body{padding:20px 18px 14px}.rcard-icon{width:46px;height:46px;font-size:22px;border-radius:12px}.rcard-body h3{font-size:16px}}
+</style>
+</head>
+<body>
+
+<header class="hero">
+<div class="hero-bg"><div class="orb orb-1"></div><div class="orb orb-2"></div><div class="orb orb-3"></div><div class="hero-pattern"></div></div>
+<div class="hi">
+<div class="hero-logo"><img src="https://raw.githubusercontent.com/Bk14School/easygrade/refs/heads/main/logo-OBEC.png" alt="OBEC"></div>
+<div class="hero-badge"><div class="dot"></div>School Report System</div>
+<h1>ระบบรายงานออนไลน์<br>โรงเรียนบ้านคลอง 14</h1>
+<p class="hero-sub">ศูนย์กลางรายงานทุกประเภท — เลือกประเภทรายงานเพื่อเข้าสู่ระบบ</p>
+</div>
+</header>
+
+<div class="mn">
+<div class="section-label">ประเภทรายงาน</div>
+<div class="grid" id="reportGrid">
+
+<!-- Card 1: รายงานผลการปฏิบัติงาน -->
+<a class="rcard" href="t-report/index.html">
+<div class="rcard-banner" style="background:linear-gradient(90deg,var(--e1),var(--e3),var(--e4))"></div>
+<div class="rcard-body">
+<div class="rcard-icon" style="background:linear-gradient(135deg,var(--e7),var(--e8));color:var(--e1)">📋</div>
+<h3>รายงานผลการปฏิบัติงาน</h3>
+<p>เพื่อประกอบการพิจารณาเลื่อนเงินเดือน ข้าราชการครูและบุคลากรทางการศึกษา สายงานการสอน</p>
+</div>
+<div class="rcard-footer">
+<span class="rcard-tag">📁 t-report</span>
+<div class="rcard-arrow">→</div>
+</div>
+</a>
+
+<!-- Card 2: SAR (ตัวอย่าง — ยังไม่พร้อม) -->
+<div class="rcard" style="opacity:.5;cursor:not-allowed" onclick="alert('🚧 กำลังพัฒนา')">
+<div class="rcard-banner" style="background:linear-gradient(90deg,#1a3a6b,#2563eb,#60a5fa)"></div>
+<div class="rcard-body">
+<div class="rcard-icon" style="background:linear-gradient(135deg,#eff6ff,#dbeafe);color:#1e40af">📊</div>
+<h3>รายงานประเมินตนเอง (SAR)</h3>
+<p>Self-Assessment Report สำหรับการประเมินคุณภาพภายในสถานศึกษา</p>
+</div>
+<div class="rcard-footer">
+<span class="rcard-tag">🚧 เร็วๆ นี้</span>
+<div class="rcard-arrow" style="background:var(--n6);box-shadow:none">→</div>
+</div>
+</div>
+
+<!-- Card 3: วิจัยในชั้นเรียน (ตัวอย่าง) -->
+<div class="rcard" style="opacity:.5;cursor:not-allowed" onclick="alert('🚧 กำลังพัฒนา')">
+<div class="rcard-banner" style="background:linear-gradient(90deg,#6b2f1a,#b45309,#f59e0b)"></div>
+<div class="rcard-body">
+<div class="rcard-icon" style="background:linear-gradient(135deg,#fef3c7,#fde68a);color:#92400e">🔬</div>
+<h3>วิจัยในชั้นเรียน</h3>
+<p>Classroom Action Research บันทึกงานวิจัยของครูแต่ละคน</p>
+</div>
+<div class="rcard-footer">
+<span class="rcard-tag">🚧 เร็วๆ นี้</span>
+<div class="rcard-arrow" style="background:var(--n6);box-shadow:none">→</div>
+</div>
+</div>
+
+<!-- Card 4: เพิ่มรายงานใหม่ -->
+<div class="add-card" onclick="alert('💡 ติดต่อผู้ดูแลระบบเพื่อเพิ่มประเภทรายงานใหม่\n\nแต่ละประเภทจะมี:\n• Google Sheet + Apps Script แยกชุด\n• Template หน้ารายงานเฉพาะ\n• Hub จัดการครูของตัวเอง')">
+<div class="plus">+</div>
+<span>เพิ่มประเภทรายงานใหม่</span>
+</div>
+
+</div>
+
+<div class="footer-info">
+ระบบรายงานออนไลน์ โรงเรียนบ้านคลอง 14 สพป.นครนายก<br>
+พัฒนาโดย <a href="https://github.com/Bk14School" target="_blank">Bk14School</a>
+</div>
+</div>
+
+</body>
+</html>
