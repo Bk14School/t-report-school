@@ -199,8 +199,9 @@ function filterTeachers() {
 }
 
 function goToTeacher(id) {
-  // ไปหน้า report ของครูคนนั้น
-  window.location.href = 'report.html?id=' + encodeURIComponent(id);
+  window.location.href =
+    'report.html?type=' + encodeURIComponent(REPORT_TYPE) +
+    '&id=' + encodeURIComponent(id);
 }
 
 // ═══ ADMIN ═══
