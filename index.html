@@ -104,9 +104,11 @@
 <button class="btn btn-admin" onclick="op('mAdmin')">🔐 ผู้ดูแลระบบ</button>
 </div>
 <div id="pendingArea" style="display:none;margin:0 0 24px"></div>
+<div id="visibilityArea" style="display:none;margin:0 0 24px"></div>
 <div class="grid" id="reportGrid"></div>
 <div id="loadArea"></div>
 </div>
+
 
 
 <script>
@@ -125,9 +127,14 @@ async function load(){
     if(j.status==='ok'){
       reportTypes=j.report_types||[];
       hubSettings=j.hub_settings||{};
-document.getElementById('schoolTitle').textContent =  'ระบบรายงานออนไลน์' + (hubSettings.school_name ? '\n' + hubSettings.school_name : '');      renderGrid();
+      document.getElementById('schoolTitle').textContent='ระบบรายงานออนไลน์'+(hubSettings.school_name?'
+'+hubSettings.school_name:'');
+      renderGrid();
       syncRegistrationButton();
-      if(isAdmin) loadPendingUsers();
+      if(isAdmin) {
+        await loadPendingUsers();
+        await loadVisibilityMatrix();
+      }
     }else showErr(j.message);
   }catch(e){showErr(e.message)}
 }
@@ -172,11 +179,31 @@ async function verifyAdmin(){
   try{
     const r=await fetch(API,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'verify_admin',password:document.getElementById('adminPw').value})});
     const j=await r.json();
-    if(j.status==='ok'){isAdmin=true;document.body.classList.add('admin-mode');cl('mAdmin');toast('🔓 เข้าสู่โหมดผู้ดูแล');loadPendingUsers();}
-    else{document.getElementById('adminErr').textContent='รหัสไม่ถูกต้อง';document.getElementById('adminPw').value=''}
+    if(j.status==='ok'){
+      isAdmin=true;
+      document.body.classList.add('admin-mode');
+      cl('mAdmin');
+      toast('🔓 เข้าสู่โหมดผู้ดูแล');
+      await loadPendingUsers();
+      await loadVisibilityMatrix();
+    } else {
+      document.getElementById('adminErr').textContent='รหัสไม่ถูกต้อง';
+      document.getElementById('adminPw').value='';
+    }
   }catch(e){document.getElementById('adminErr').textContent=e.message}
 }
-function exitAdmin(){isAdmin=false;document.body.classList.remove('admin-mode');document.getElementById('pendingArea').style.display='none';toast('🔒 ออกจากโหมดผู้ดูแล')}
+
+function exitAdmin(){
+  isAdmin=false;
+  document.body.classList.remove('admin-mode');
+  document.getElementById('pendingArea').style.display='none';
+  document.getElementById('visibilityArea').style.display='none';
+  toast('🔒 ออกจากโหมดผู้ดูแล');
+}
+
+function hubOptionsHtml(selected=''){
+  return reportTypes.map(rt => `<option value="${esc(rt.slug)}" ${selected===rt.slug?'selected':''}>${esc(rt.title||rt.slug)}</option>`).join('');
+}
 
 async function loadPendingUsers(){
   const area=document.getElementById('pendingArea');
@@ -197,6 +224,7 @@ async function loadPendingUsers(){
       <th align="left" style="padding:8px;border-bottom:1px solid #e5e7eb">ID</th>
       <th align="left" style="padding:8px;border-bottom:1px solid #e5e7eb">โทร</th>
       <th align="left" style="padding:8px;border-bottom:1px solid #e5e7eb">อีเมล</th>
+      <th align="left" style="padding:8px;border-bottom:1px solid #e5e7eb">เผยแพร่เข้า Hub</th>
       <th align="left" style="padding:8px;border-bottom:1px solid #e5e7eb">จัดการ</th>
       </tr></thead><tbody>`;
     users.forEach(u=>{
@@ -206,8 +234,14 @@ async function loadPendingUsers(){
         <td style="padding:8px;border-bottom:1px solid #f1f5f9">${esc(u.phone||'')}</td>
         <td style="padding:8px;border-bottom:1px solid #f1f5f9">${esc(u.email||'')}</td>
         <td style="padding:8px;border-bottom:1px solid #f1f5f9">
-          <button class="btn btn-primary btn-sm" onclick="approveUser('${esc(u.teacher_id||'')}')">อนุมัติ</button>
-          <button class="btn btn-ghost btn-sm" onclick="suspendUser('${esc(u.teacher_id||'')}')">ระงับ</button>
+          <select id="pendingHub_${esc(u.teacher_id||'')}" style="padding:8px 10px;border:1px solid #d1d5db;border-radius:10px;min-width:160px">
+            ${hubOptionsHtml()}
+          </select>
+        </td>
+        <td style="padding:8px;border-bottom:1px solid #f1f5f9;white-space:nowrap">
+          <button class="btn btn-ghost btn-sm" onclick="approveOnly('${esc(u.teacher_id||'')}')">อนุมัติอย่างเดียว</button>
+          <button class="btn btn-primary btn-sm" onclick="approveAndPublish('${esc(u.teacher_id||'')}')">อนุมัติและเผยแพร่</button>
+          <button class="btn btn-sm" style="background:#fee2e2;color:#b91c1c" onclick="suspendUser('${esc(u.teacher_id||'')}')">ระงับ</button>
         </td></tr>`;
     });
     html+='</tbody></table></div></div>';
@@ -216,17 +250,88 @@ async function loadPendingUsers(){
   }catch(e){area.innerHTML='<div class="empty">โหลด pending ไม่สำเร็จ: '+esc(e.message)+'</div>';area.style.display='block';}
 }
 
-async function approveUser(teacherId){
-  const r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'approve_user',data:{teacher_id:teacherId}})});
-  const j=await r.json();
-  toast(j.status==='ok'?'✅ อนุมัติแล้ว':'❌ '+j.message);
-  loadPendingUsers();
+async function loadVisibilityMatrix(){
+  const area=document.getElementById('visibilityArea');
+  try {
+    const r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'list_users_matrix'})});
+    const j=await r.json();
+    const users=j.users||[];
+    const hubs=j.hubs||reportTypes.map(r=>({slug:r.slug,title:r.title}));
+    if(!users.length){
+      area.innerHTML='<div class="empty" style="padding:24px 0">ยังไม่มีผู้ใช้ในระบบ</div>';
+      area.style.display='block';
+      return;
+    }
+    let html=`<div class="card" style="background:#fff;border:1px solid #e8ecf0;border-radius:20px;box-shadow:0 2px 8px rgba(12,59,46,.06);padding:20px;margin-bottom:28px">
+      <div style="font-family:Prompt,sans-serif;font-size:18px;font-weight:600;color:#0c3b2e;margin-bottom:12px">จัดการการเผยแพร่ราย Hub</div>
+      <div style="overflow:auto"><table style="width:100%;border-collapse:collapse;min-width:900px">
+      <thead><tr>
+      <th align="left" style="padding:8px;border-bottom:1px solid #e5e7eb;position:sticky;left:0;background:#fff">ชื่อ</th>
+      <th align="left" style="padding:8px;border-bottom:1px solid #e5e7eb;position:sticky;left:180px;background:#fff">ID</th>
+      <th align="left" style="padding:8px;border-bottom:1px solid #e5e7eb">สถานะ</th>
+      ${hubs.map(h=>`<th align="center" style="padding:8px;border-bottom:1px solid #e5e7eb">${esc(h.title||h.slug)}</th>`).join('')}
+      </tr></thead><tbody>`;
+    users.forEach(u=>{
+      html+=`<tr>
+        <td style="padding:8px;border-bottom:1px solid #f1f5f9;position:sticky;left:0;background:#fff">${esc(u.full_name||'')}</td>
+        <td style="padding:8px;border-bottom:1px solid #f1f5f9;position:sticky;left:180px;background:#fff">${esc(u.teacher_id||'')}</td>
+        <td style="padding:8px;border-bottom:1px solid #f1f5f9">${esc(u.status||'')}</td>
+        ${hubs.map(h=>`<td align="center" style="padding:8px;border-bottom:1px solid #f1f5f9"><input type="checkbox" ${u.visibility && u.visibility[h.slug] ? 'checked':''} onchange="toggleVisibility('${esc(u.teacher_id||'')}','${esc(h.slug)}', this.checked)"></td>`).join('')}
+      </tr>`;
+    });
+    html+='</tbody></table></div></div>';
+    area.innerHTML=html;
+    area.style.display='block';
+  } catch(e) {
+    area.innerHTML='<div class="empty">โหลดตารางเผยแพร่ไม่สำเร็จ: '+esc(e.message)+'</div>';
+    area.style.display='block';
+  }
 }
+
+function selectedHubFor(teacherId){
+  const el=document.getElementById('pendingHub_'+teacherId);
+  return el ? el.value : '';
+}
+
+async function approveOnly(teacherId){
+  try{
+    const r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'approve_user',data:{teacher_id:teacherId}})});
+    const j=await r.json();
+    toast(j.status==='ok'?'✅ อนุมัติแล้ว (ยังไม่เผยแพร่)':'❌ '+j.message);
+    await loadPendingUsers();
+    await loadVisibilityMatrix();
+  }catch(e){toast('❌ '+e.message)}
+}
+
+async function approveAndPublish(teacherId){
+  try{
+    const hubSlug = selectedHubFor(teacherId);
+    if(!hubSlug){ toast('กรุณาเลือก Hub'); return; }
+    const r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'approve_user',data:{teacher_id:teacherId,hub_slug:hubSlug,is_visible:true}})});
+    const j=await r.json();
+    toast(j.status==='ok'?'✅ อนุมัติและเผยแพร่แล้ว':'❌ '+j.message);
+    await loadPendingUsers();
+    await loadVisibilityMatrix();
+    await load();
+  }catch(e){toast('❌ '+e.message)}
+}
+
 async function suspendUser(teacherId){
   const r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'suspend_user',data:{teacher_id:teacherId}})});
   const j=await r.json();
   toast(j.status==='ok'?'⛔ ระงับแล้ว':'❌ '+j.message);
-  loadPendingUsers();
+  await loadPendingUsers();
+  await loadVisibilityMatrix();
+}
+
+async function toggleVisibility(teacherId, hubSlug, visible){
+  try{
+    const r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'set_user_hub_visibility',data:{teacher_id:teacherId,hub_slug:hubSlug,is_visible:visible}})});
+    const j=await r.json();
+    toast(j.status==='ok'?'💾 บันทึกแล้ว':'❌ '+j.message);
+    await loadVisibilityMatrix();
+    await load();
+  }catch(e){toast('❌ '+e.message)}
 }
 
 async function createReportType(){
@@ -245,7 +350,9 @@ async function createReportType(){
 }
 
 async function deleteRT(slug,title){
-if(!confirm('⚠️ ลบ "'+title+'" ('+slug+')?\n\nทั้งโฟลเดอร์ ข้อมูลครู และรูปจะถูกลบ!')) return;
+  if(!confirm('⚠️ ลบ "'+title+'" ('+slug+')?
+
+ทั้งโฟลเดอร์ ข้อมูลครู และรูปจะถูกลบ!'))return;
   toast('🗑️ กำลังลบ...');
   try{
     const r=await fetch(API,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'delete_report_type',slug})});
