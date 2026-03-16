@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ระบบรายงานออนไลน์</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--e1:#0c3b2e;--e2:#145a3e;--e3:#1a7a54;--e4:#22a06b;--e5:#57d9a3;--e6:#b3f5d4;--e7:#e3fcef;--e8:#f4fdf8;--g1:#6b4f17;--g2:#a67c2e;--g3:#d4a843;--g4:#f0c75e;--g5:#f9e39f;--g6:#fef3cd;--n1:#1a1d23;--n2:#2d3139;--n3:#464c57;--n4:#6b7280;--n5:#9ca3af;--n6:#d1d5db;--n7:#e8ecf0;--n8:#f3f5f8;--n9:#fafbfc;--bg:#f7f9f8;--card:#fff;--red:#e74c3c;--shadow-sm:0 2px 8px rgba(12,59,46,.06);--shadow-md:0 8px 24px rgba(12,59,46,.08);--shadow-lg:0 16px 48px rgba(12,59,46,.1);--r:20px;--rs:12px;--rx:8px;--ease:.3s cubic-bezier(.4,0,.2,1);--bounce:.5s cubic-bezier(.34,1.56,.64,1)}
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--n1);line-height:1.8;font-size:15px;-webkit-font-smoothing:antialiased;overflow-x:hidden}::selection{background:var(--e6);color:var(--e1)}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}@keyframes fadeUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}@keyframes scaleIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}@keyframes spin{to{transform:rotate(360deg)}}@keyframes pulse-ring{0%{box-shadow:0 0 0 0 rgba(34,160,107,.4)}70%{box-shadow:0 0 0 12px rgba(34,160,107,0)}100%{box-shadow:0 0 0 0 rgba(34,160,107,0)}}
+.hero{background:var(--e1);position:relative;overflow:hidden;min-height:320px}.hero-bg{position:absolute;inset:0;overflow:hidden}.hero-bg .orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:.12}.orb-1{width:500px;height:500px;background:var(--e4);top:-150px;right:-80px;animation:float 8s ease infinite}.orb-2{width:400px;height:400px;background:var(--g3);bottom:-120px;left:-60px;animation:float 10s ease infinite 2s}.hero-pattern{position:absolute;inset:0;opacity:.03;background-image:repeating-linear-gradient(45deg,transparent,transparent 35px,rgba(255,255,255,.5) 35px,rgba(255,255,255,.5) 36px)}
+.hi{max-width:960px;margin:0 auto;padding:64px 32px 56px;position:relative;z-index:1;color:#fff;text-align:center}
+.hero-logo{width:88px;height:88px;background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.1);border-radius:24px;display:inline-flex;align-items:center;justify-content:center;backdrop-filter:blur(12px);animation:float 6s ease infinite;margin-bottom:24px}.hero-logo img{width:60px;height:60px;object-fit:contain}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);padding:8px 22px;border-radius:28px;font-size:12px;backdrop-filter:blur(8px);letter-spacing:.5px;margin-bottom:20px}.hero-badge .dot{width:8px;height:8px;border-radius:50%;background:var(--e5);box-shadow:0 0 10px var(--e5);animation:pulse-ring 2s infinite}
+.hero h1{font-family:'Prompt',sans-serif;font-size:clamp(26px,6vw,44px);font-weight:800;line-height:1.15;margin-bottom:12px;letter-spacing:-.5px;background:linear-gradient(135deg,#fff 20%,var(--e6) 50%,var(--g4) 80%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub{font-size:15px;opacity:.6;font-weight:300;max-width:520px;margin:0 auto}
+.mn{max-width:960px;margin:-40px auto 0;padding:0 32px 100px;position:relative;z-index:10}
+.toolbar{display:flex;align-items:center;gap:12px;margin-bottom:28px;justify-content:flex-end}
+.btn{padding:12px 24px;border:none;border-radius:var(--rs);font-family:'Prompt',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:var(--ease);display:inline-flex;align-items:center;gap:8px;white-space:nowrap}.btn-admin{background:linear-gradient(135deg,var(--g2),var(--g3));color:#fff}.btn-admin:hover{box-shadow:var(--shadow-md);transform:translateY(-2px)}.btn-primary{background:linear-gradient(135deg,var(--e1),var(--e3));color:#fff;box-shadow:0 4px 16px rgba(12,59,46,.2)}.btn-primary:hover{box-shadow:var(--shadow-md);transform:translateY(-2px)}.btn-ghost{background:var(--n8);color:var(--n3)}.btn-ghost:hover{background:var(--n7)}.btn-sm{padding:9px 20px;font-size:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:24px}
+.rcard{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow-sm);border:1px solid var(--n7);overflow:hidden;transition:var(--ease);cursor:pointer;position:relative;text-decoration:none;color:inherit;display:block;animation:fadeUp .5s ease both}.rcard:hover{box-shadow:var(--shadow-lg);transform:translateY(-6px);border-color:var(--e5)}
+.rcard-banner{height:8px;width:100%;background:linear-gradient(90deg,var(--e1),var(--e3),var(--e4))}
+.rcard-body{padding:28px 24px 20px}.rcard-icon{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;margin-bottom:14px;background:linear-gradient(135deg,var(--e7),var(--e8));color:var(--e1);box-shadow:0 4px 12px rgba(0,0,0,.04)}
+.rcard-body h3{font-family:'Prompt',sans-serif;font-size:17px;font-weight:600;color:var(--e1);margin-bottom:6px}.rcard-body p{font-size:13px;color:var(--n4);font-weight:300;line-height:1.7;min-height:38px}
+.rcard-footer{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:var(--n9);border-top:1px solid var(--n7)}.rcard-tag{font-size:11px;color:var(--n5);font-family:'Prompt',sans-serif}
+.rcard-arrow{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--e1),var(--e3));color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;transition:var(--bounce);box-shadow:0 4px 12px rgba(12,59,46,.2)}.rcard:hover .rcard-arrow{transform:translateX(4px) scale(1.1)}
+.rcard .del-badge{position:absolute;top:12px;right:12px;width:28px;height:28px;border-radius:50%;background:rgba(231,76,60,.9);color:#fff;border:2px solid #fff;font-size:14px;cursor:pointer;display:none;align-items:center;justify-content:center;transition:var(--ease);box-shadow:0 2px 8px rgba(0,0,0,.2);z-index:5}.del-badge:hover{transform:scale(1.15)}.admin-mode .rcard .del-badge{display:flex}
+.admin-bar{display:none;position:sticky;top:0;z-index:900;background:linear-gradient(135deg,var(--g1),var(--g2),var(--g3));color:#fff;padding:12px 28px;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 4px 32px rgba(107,79,23,.3)}.admin-mode .admin-bar{display:flex}.ab-left{display:flex;align-items:center;gap:10px;font-family:'Prompt',sans-serif;font-size:14px;font-weight:300}.ab-left .dot{width:10px;height:10px;border-radius:50%;background:var(--g4);animation:pulse-ring 2s infinite}.ab-right{display:flex;gap:8px;flex-wrap:wrap}
+.ov{display:none;position:fixed;inset:0;z-index:2000;background:rgba(12,59,46,.3);backdrop-filter:blur(16px);align-items:center;justify-content:center;padding:20px}.ov.show{display:flex}
+.mb{background:var(--card);border-radius:24px;padding:36px;width:100%;max-width:460px;box-shadow:var(--shadow-lg);animation:scaleIn .35s var(--bounce);border:1px solid var(--n7)}.mb h3{font-family:'Prompt',sans-serif;font-size:20px;font-weight:600;color:var(--e1);margin-bottom:4px}.mb .mdesc{font-size:13px;color:var(--n4);margin-bottom:24px}.mb label{font-size:10px;font-weight:600;color:var(--n3);display:block;margin-bottom:4px;letter-spacing:1px;text-transform:uppercase}.mb input,.mb textarea{width:100%;padding:12px 16px;border:2px solid var(--n7);border-radius:var(--rs);font-family:inherit;font-size:14px;outline:none;transition:var(--ease);margin-bottom:14px;background:var(--n9)}.mb input:focus,.mb textarea:focus{border-color:var(--e4);background:#fff;box-shadow:0 0 0 4px rgba(34,160,107,.1)}.mb textarea{resize:vertical;min-height:60px}.mb .er{font-size:12px;color:var(--red);min-height:16px;margin-bottom:8px}.mba{display:flex;gap:10px;margin-top:8px}.mba button{flex:1}
+.toast{position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(30px);padding:14px 28px;border-radius:60px;font-family:'Prompt',sans-serif;font-size:14px;z-index:3000;opacity:0;transition:var(--bounce);pointer-events:none;background:var(--e1);color:#fff;box-shadow:var(--shadow-lg)}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.loading{text-align:center;padding:80px 20px}.loading .spinner{width:44px;height:44px;border:3px solid var(--n7);border-top-color:var(--e4);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 20px}.loading p{color:var(--n4);font-family:'Prompt',sans-serif}
+.empty{text-align:center;padding:60px 20px;color:var(--n4)}.empty-icon{font-size:56px;margin-bottom:16px}.empty h3{font-family:'Prompt',sans-serif;font-size:18px;color:var(--n3);margin-bottom:8px}
+@media(max-width:768px){.hi{padding:48px 20px 40px}.mn{padding:0 18px 60px;margin-top:-28px}.grid{grid-template-columns:1fr}}
+@media(max-width:480px){.hi{padding:32px 14px 28px}.mn{padding:0 10px 40px}.hero h1{font-size:24px}.mb{padding:24px;border-radius:16px}.admin-bar{padding:10px 14px;flex-wrap:wrap}.rcard-body{padding:20px 18px 14px}}
+</style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+
+<div class="ov" id="mAdmin"><div class="mb">
+<h3>🔐 เข้าสู่โหมดผู้ดูแล</h3><p class="mdesc">ใส่รหัสผ่าน Admin</p>
+<input type="password" id="adminPw" placeholder="••••••" onkeydown="if(event.key==='Enter')verifyAdmin()">
+<div class="er" id="adminErr"></div>
+<div class="mba"><button class="btn btn-ghost" onclick="cl('mAdmin')">ยกเลิก</button><button class="btn btn-admin" onclick="verifyAdmin()">เข้าสู่ระบบ</button></div>
+</div></div>
+
+<div class="ov" id="mCreate"><div class="mb">
+<h3>📁 สร้างประเภทรายงานใหม่</h3><p class="mdesc">จะสร้างโฟลเดอร์ใน Drive อัตโนมัติ</p>
+<label>ชื่อรายงาน</label><input id="cTitle" placeholder="เช่น รายงานประเมินตนเอง (SAR)">
+<label>Slug (ภาษาอังกฤษ, ไม่เว้นวรรค)</label><input id="cSlug" placeholder="เช่น sar" oninput="this.value=this.value.replace(/[^a-zA-Z0-9_-]/g,'').toLowerCase()">
+<label>คำอธิบาย</label><textarea id="cDesc" rows="2" placeholder="(ไม่บังคับ)"></textarea>
+<div class="er" id="createErr"></div>
+<div class="mba"><button class="btn btn-ghost" onclick="cl('mCreate')">ยกเลิก</button><button class="btn btn-primary" onclick="createReportType()">สร้าง</button></div>
+</div></div>
+
+<div class="ov" id="mSettings"><div class="mb">
+<h3>⚙️ ตั้งค่าระบบ</h3><p class="mdesc">แก้ไขข้อมูลโรงเรียนและรหัส Admin</p>
+<label>ชื่อโรงเรียน</label><input id="sSchool" placeholder="ชื่อโรงเรียน">
+<label>รหัส Admin ใหม่</label><input type="password" id="sAdminPw" placeholder="เว้นว่าง = ไม่เปลี่ยน">
+<div class="mba"><button class="btn btn-ghost" onclick="cl('mSettings')">ยกเลิก</button><button class="btn btn-admin" onclick="saveHubSettings()">บันทึก</button></div>
+</div></div>
+
+<div class="admin-bar">
+<div class="ab-left"><div class="dot"></div>โหมดผู้ดูแลระบบ</div>
+<div class="ab-right">
+<button class="btn btn-sm" style="background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.15)" onclick="op('mCreate')">📁 สร้างรายงานใหม่</button>
+<button class="btn btn-sm" style="background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.15)" onclick="openSettings()">⚙️ ตั้งค่า</button>
+<button class="btn btn-sm" style="background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.1)" onclick="exitAdmin()">✕ ออก</button>
+</div>
+</div>
+
+<header class="hero">
+<div class="hero-bg"><div class="orb orb-1"></div><div class="orb orb-2"></div><div class="hero-pattern"></div></div>
+<div class="hi">
+<div class="hero-logo"><img src="https://raw.githubusercontent.com/Bk14School/easygrade/refs/heads/main/logo-OBEC.png" alt="OBEC"></div>
+<div class="hero-badge"><div class="dot"></div>School Report System</div>
+<h1 id="schoolTitle">ระบบรายงานออนไลน์</h1>
+<p class="hero-sub">ศูนย์กลางรายงานทุกประเภท — เลือกประเภทรายงานเพื่อเข้าสู่ระบบ</p>
+</div>
+</header>
+
+<div class="mn">
+<div class="toolbar"><button class="btn btn-admin" onclick="op('mAdmin')">🔐 ผู้ดูแลระบบ</button></div>
+<div class="grid" id="reportGrid"></div>
+<div id="loadArea"></div>
+</div>
+
+<script>
+const API='https://script.google.com/macros/s/AKfycbx7QLgz3vpuDEDGWEH-sACcVm9v-bJlp9nkvrxvauioLCgf-0qHN8uHhFrhCxQo2U4t/exec';
+let reportTypes=[], hubSettings={}, isAdmin=false;
+const icons=['📋','📊','🔬','📝','📚','🎓','📐','🧪'];
+
+document.addEventListener('DOMContentLoaded', load);
+
+async function load(){
+  document.getElementById('loadArea').innerHTML='<div class="loading"><div class="spinner"></div><p>กำลังโหลด...</p></div>';
+  document.getElementById('reportGrid').innerHTML='';
+  try{
+    const r=await fetch(API+'?action=list_report_types',{redirect:'follow'});
+    const j=await r.json();
+    if(j.status==='ok'){
+      reportTypes=j.report_types||[];
+      hubSettings=j.hub_settings||{};
+      document.getElementById('schoolTitle').textContent='ระบบรายงานออนไลน์'+(hubSettings.school_name?'\n'+hubSettings.school_name:'');
+      renderGrid();
+    }else showErr(j.message);
+  }catch(e){showErr(e.message)}
+}
+
+function showErr(m){
+  document.getElementById('loadArea').innerHTML='<div class="empty"><div class="empty-icon">⚠️</div><h3>โหลดไม่สำเร็จ</h3><p>'+esc(m)+'</p><button class="btn btn-primary" onclick="load()" style="margin-top:16px">ลองใหม่</button></div>';
+}
+
+function renderGrid(){
+  document.getElementById('loadArea').innerHTML='';
+  let h='';
+  reportTypes.forEach((rt,i)=>{
+    const icon=icons[i%icons.length];
+    const date=rt.created?new Date(rt.created).toLocaleDateString('th-TH',{year:'numeric',month:'short'}):'';
+    h+=`<a class="rcard" href="${esc(rt.slug)}/index.html" style="animation-delay:${i*.07}s">
+      <button class="del-badge" onclick="event.preventDefault();event.stopPropagation();deleteRT('${esc(rt.slug)}','${esc(rt.title)}')">✕</button>
+      <div class="rcard-banner"></div>
+      <div class="rcard-body">
+        <div class="rcard-icon">${icon}</div>
+        <h3>${esc(rt.title)}</h3>
+        <p>${esc(rt.description||'')}</p>
+      </div>
+      <div class="rcard-footer">
+        <span class="rcard-tag">📁 ${esc(rt.slug)}${date?' · '+date:''}</span>
+        <div class="rcard-arrow">→</div>
+      </div>
+    </a>`;
+  });
+  if(!reportTypes.length) h='<div class="empty" style="grid-column:1/-1"><div class="empty-icon">📁</div><h3>ยังไม่มีประเภทรายงาน</h3><p>เข้าระบบผู้ดูแลเพื่อสร้าง</p></div>';
+  document.getElementById('reportGrid').innerHTML=h;
+}
+
+async function verifyAdmin(){
+  try{
+    const r=await fetch(API,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'verify_admin',password:document.getElementById('adminPw').value})});
+    const j=await r.json();
+    if(j.status==='ok'){isAdmin=true;document.body.classList.add('admin-mode');cl('mAdmin');toast('🔓 เข้าสู่โหมดผู้ดูแล')}
+    else{document.getElementById('adminErr').textContent='รหัสไม่ถูกต้อง';document.getElementById('adminPw').value=''}
+  }catch(e){document.getElementById('adminErr').textContent=e.message}
+}
+function exitAdmin(){isAdmin=false;document.body.classList.remove('admin-mode');toast('🔒 ออกจากโหมดผู้ดูแล')}
+
+async function createReportType(){
+  const title=document.getElementById('cTitle').value.trim();
+  const slug=document.getElementById('cSlug').value.trim();
+  const desc=document.getElementById('cDesc').value.trim();
+  if(!title){document.getElementById('createErr').textContent='กรุณาใส่ชื่อ';return}
+  if(!slug||slug.length<2){document.getElementById('createErr').textContent='Slug ต้องมีอย่างน้อย 2 ตัว (ภาษาอังกฤษ)';return}
+  toast('⏳ กำลังสร้าง...');
+  try{
+    const r=await fetch(API,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'create_report_type',slug,title,description:desc})});
+    const j=await r.json();
+    if(j.status==='ok'){cl('mCreate');toast('✅ สร้าง "'+title+'" แล้ว');load()}
+    else document.getElementById('createErr').textContent=j.message;
+  }catch(e){document.getElementById('createErr').textContent=e.message}
+}
+
+async function deleteRT(slug,title){
+  if(!confirm('⚠️ ลบ "'+title+'" ('+slug+')?\n\nทั้งโฟลเดอร์ ข้อมูลครู และรูปจะถูกลบ!'))return;
+  toast('🗑️ กำลังลบ...');
+  try{
+    const r=await fetch(API,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'delete_report_type',slug})});
+    const j=await r.json();
+    toast(j.status==='ok'?'🗑️ ลบแล้ว':'❌ '+j.message);load();
+  }catch(e){toast('❌ '+e.message)}
+}
+
+function openSettings(){document.getElementById('sSchool').value=hubSettings.school_name||'';document.getElementById('sAdminPw').value='';op('mSettings')}
+async function saveHubSettings(){
+  const d={action:'update_hub_settings',school_name:document.getElementById('sSchool').value.trim()};
+  const np=document.getElementById('sAdminPw').value;if(np)d.new_admin_password=np;
+  try{await fetch(API,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain'},body:JSON.stringify(d)});cl('mSettings');toast('⚙️ บันทึกแล้ว');load()}catch(e){toast('❌ '+e.message)}
+}
+
+function esc(s){if(!s)return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800)}
+function op(id){document.getElementById(id).classList.add('show');if(id==='mAdmin'){document.getElementById('adminPw').value='';document.getElementById('adminErr').textContent=''}}
+function cl(id){document.getElementById(id).classList.remove('show')}
+</script>
+</body>
+</html>
