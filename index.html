@@ -56,10 +56,27 @@
 </div></div>
 
 <div class="ov" id="mSettings"><div class="mb">
-<h3>⚙️ ตั้งค่าระบบ</h3><p class="mdesc">แก้ไขข้อมูลโรงเรียนและรหัส Admin</p>
+<h3>⚙️ ตั้งค่าระบบ</h3><p class="mdesc">แก้ไขข้อมูลโรงเรียน, รหัส Admin และการเปิดรับลงทะเบียนกลาง</p>
 <label>ชื่อโรงเรียน</label><input id="sSchool" placeholder="ชื่อโรงเรียน">
 <label>รหัส Admin ใหม่</label><input type="password" id="sAdminPw" placeholder="เว้นว่าง = ไม่เปลี่ยน">
+<label>เปิดรับลงทะเบียนกลาง</label>
+<select id="sGlobalRegEnabled" style="width:100%;padding:12px 16px;border:2px solid var(--n7);border-radius:var(--rs);font-family:inherit;font-size:14px;outline:none;transition:var(--ease);margin-bottom:14px;background:var(--n9)">
+  <option value="true">เปิด</option>
+  <option value="false">ปิด</option>
+</select>
+<label>ข้อความแจ้งลงทะเบียน</label><textarea id="sGlobalRegMsg" rows="2" placeholder="เช่น เปิดรับลงทะเบียนสำหรับบุคลากรภายใน"></textarea>
 <div class="mba"><button class="btn btn-ghost" onclick="cl('mSettings')">ยกเลิก</button><button class="btn btn-admin" onclick="saveHubSettings()">บันทึก</button></div>
+</div></div>
+
+<div class="ov" id="mRegister"><div class="mb">
+<h3>📝 ลงทะเบียนครูใหม่</h3><p class="mdesc">ลงทะเบียนครั้งเดียว แล้วแอดมินจะอนุมัติและกำหนด Hub ที่แสดงภายหลัง</p>
+<label>ชื่อ-สกุล</label><input id="rName" placeholder="เช่น นายสมชาย ใจดี">
+<label>Teacher ID</label><input id="rTeacherId" placeholder="เช่น somchai" oninput="this.value=this.value.replace(/[^a-zA-Z0-9_-]/g,'').toLowerCase()">
+<label>รหัสผ่าน</label><input type="password" id="rPassword" placeholder="อย่างน้อย 4 ตัว">
+<label>เบอร์โทร</label><input id="rPhone" placeholder="08xxxxxxxx">
+<label>อีเมล</label><input id="rEmail" placeholder="name@school.ac.th">
+<div class="er" id="registerErr"></div>
+<div class="mba"><button class="btn btn-ghost" onclick="cl('mRegister')">ยกเลิก</button><button class="btn btn-primary" onclick="submitRegister()">ลงทะเบียน</button></div>
 </div></div>
 
 <div class="admin-bar">
@@ -82,10 +99,15 @@
 </header>
 
 <div class="mn">
-<div class="toolbar"><button class="btn btn-admin" onclick="op('mAdmin')">🔐 ผู้ดูแลระบบ</button></div>
+<div class="toolbar">
+<button class="btn btn-primary" id="registerBtn" onclick="openRegister()" style="display:none">📝 ลงทะเบียนครูใหม่</button>
+<button class="btn btn-admin" onclick="op('mAdmin')">🔐 ผู้ดูแลระบบ</button>
+</div>
+<div id="pendingArea" style="display:none;margin:0 0 24px"></div>
 <div class="grid" id="reportGrid"></div>
 <div id="loadArea"></div>
 </div>
+
 
 <script>
 const API='https://script.google.com/macros/s/AKfycbzWU3DzJHBsMXXAtYU4E2wY_23iPXd2EdVBEZ6KTn2hjZYATQYXQywJDuKXeiIUcO_kjQ/exec';
@@ -103,10 +125,19 @@ async function load(){
     if(j.status==='ok'){
       reportTypes=j.report_types||[];
       hubSettings=j.hub_settings||{};
-      document.getElementById('schoolTitle').textContent='ระบบรายงานออนไลน์'+(hubSettings.school_name?'\n'+hubSettings.school_name:'');
+      document.getElementById('schoolTitle').textContent='ระบบรายงานออนไลน์'+(hubSettings.school_name?'
+'+hubSettings.school_name:'');
       renderGrid();
+      syncRegistrationButton();
+      if(isAdmin) loadPendingUsers();
     }else showErr(j.message);
   }catch(e){showErr(e.message)}
+}
+
+function syncRegistrationButton(){
+  const btn=document.getElementById('registerBtn');
+  if(!btn) return;
+  btn.style.display=String(hubSettings.global_registration_enabled).toUpperCase()==='TRUE'?'inline-flex':'none';
 }
 
 function showErr(m){
@@ -120,6 +151,7 @@ function renderGrid(){
     const icon=icons[i%icons.length];
     const date=rt.created?new Date(rt.created).toLocaleDateString('th-TH',{year:'numeric',month:'short'}):'';
     const hubUrl='hub.html?type='+encodeURIComponent(rt.slug);
+
     h+=`<a class="rcard" href="${hubUrl}" style="animation-delay:${i*.07}s">
       <button class="del-badge" onclick="event.preventDefault();event.stopPropagation();deleteRT('${esc(rt.slug)}','${esc(rt.title)}')">✕</button>
       <div class="rcard-banner"></div>
@@ -142,11 +174,62 @@ async function verifyAdmin(){
   try{
     const r=await fetch(API,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'verify_admin',password:document.getElementById('adminPw').value})});
     const j=await r.json();
-    if(j.status==='ok'){isAdmin=true;document.body.classList.add('admin-mode');cl('mAdmin');toast('🔓 เข้าสู่โหมดผู้ดูแล')}
+    if(j.status==='ok'){isAdmin=true;document.body.classList.add('admin-mode');cl('mAdmin');toast('🔓 เข้าสู่โหมดผู้ดูแล');loadPendingUsers();}
     else{document.getElementById('adminErr').textContent='รหัสไม่ถูกต้อง';document.getElementById('adminPw').value=''}
   }catch(e){document.getElementById('adminErr').textContent=e.message}
 }
-function exitAdmin(){isAdmin=false;document.body.classList.remove('admin-mode');toast('🔒 ออกจากโหมดผู้ดูแล')}
+function exitAdmin(){isAdmin=false;document.body.classList.remove('admin-mode');document.getElementById('pendingArea').style.display='none';toast('🔒 ออกจากโหมดผู้ดูแล')}
+
+async function loadPendingUsers(){
+  const area=document.getElementById('pendingArea');
+  try{
+    const r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'list_pending_users'})});
+    const j=await r.json();
+    const users=j.users||[];
+    if(!users.length){
+      area.innerHTML='<div class="empty" style="padding:24px 0">ไม่มีผู้สมัครรออนุมัติ</div>';
+      area.style.display='block';
+      return;
+    }
+    let html=`<div class="card" style="background:#fff;border:1px solid #e8ecf0;border-radius:20px;box-shadow:0 2px 8px rgba(12,59,46,.06);padding:20px;margin-bottom:28px">
+      <div style="font-family:Prompt,sans-serif;font-size:18px;font-weight:600;color:#0c3b2e;margin-bottom:12px">ผู้สมัครรออนุมัติ</div>
+      <div style="overflow:auto"><table style="width:100%;border-collapse:collapse">
+      <thead><tr>
+      <th align="left" style="padding:8px;border-bottom:1px solid #e5e7eb">ชื่อ</th>
+      <th align="left" style="padding:8px;border-bottom:1px solid #e5e7eb">ID</th>
+      <th align="left" style="padding:8px;border-bottom:1px solid #e5e7eb">โทร</th>
+      <th align="left" style="padding:8px;border-bottom:1px solid #e5e7eb">อีเมล</th>
+      <th align="left" style="padding:8px;border-bottom:1px solid #e5e7eb">จัดการ</th>
+      </tr></thead><tbody>`;
+    users.forEach(u=>{
+      html+=`<tr>
+        <td style="padding:8px;border-bottom:1px solid #f1f5f9">${esc(u.full_name||'')}</td>
+        <td style="padding:8px;border-bottom:1px solid #f1f5f9">${esc(u.teacher_id||'')}</td>
+        <td style="padding:8px;border-bottom:1px solid #f1f5f9">${esc(u.phone||'')}</td>
+        <td style="padding:8px;border-bottom:1px solid #f1f5f9">${esc(u.email||'')}</td>
+        <td style="padding:8px;border-bottom:1px solid #f1f5f9">
+          <button class="btn btn-primary btn-sm" onclick="approveUser('${esc(u.teacher_id||'')}')">อนุมัติ</button>
+          <button class="btn btn-ghost btn-sm" onclick="suspendUser('${esc(u.teacher_id||'')}')">ระงับ</button>
+        </td></tr>`;
+    });
+    html+='</tbody></table></div></div>';
+    area.innerHTML=html;
+    area.style.display='block';
+  }catch(e){area.innerHTML='<div class="empty">โหลด pending ไม่สำเร็จ: '+esc(e.message)+'</div>';area.style.display='block';}
+}
+
+async function approveUser(teacherId){
+  const r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'approve_user',data:{teacher_id:teacherId}})});
+  const j=await r.json();
+  toast(j.status==='ok'?'✅ อนุมัติแล้ว':'❌ '+j.message);
+  loadPendingUsers();
+}
+async function suspendUser(teacherId){
+  const r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'suspend_user',data:{teacher_id:teacherId}})});
+  const j=await r.json();
+  toast(j.status==='ok'?'⛔ ระงับแล้ว':'❌ '+j.message);
+  loadPendingUsers();
+}
 
 async function createReportType(){
   const title=document.getElementById('cTitle').value.trim();
@@ -164,7 +247,9 @@ async function createReportType(){
 }
 
 async function deleteRT(slug,title){
-  if(!confirm('⚠️ ลบ "'+title+'" ('+slug+')?\n\nทั้งโฟลเดอร์ ข้อมูลครู และรูปจะถูกลบ!'))return;
+  if(!confirm('⚠️ ลบ "'+title+'" ('+slug+')?
+
+ทั้งโฟลเดอร์ ข้อมูลครู และรูปจะถูกลบ!'))return;
   toast('🗑️ กำลังลบ...');
   try{
     const r=await fetch(API,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'delete_report_type',slug})});
@@ -173,11 +258,48 @@ async function deleteRT(slug,title){
   }catch(e){toast('❌ '+e.message)}
 }
 
-function openSettings(){document.getElementById('sSchool').value=hubSettings.school_name||'';document.getElementById('sAdminPw').value='';op('mSettings')}
+function openSettings(){
+  document.getElementById('sSchool').value=hubSettings.school_name||'';
+  document.getElementById('sAdminPw').value='';
+  document.getElementById('sGlobalRegEnabled').value=String(hubSettings.global_registration_enabled).toUpperCase()==='TRUE'?'true':'false';
+  document.getElementById('sGlobalRegMsg').value=hubSettings.global_registration_message||'';
+  op('mSettings');
+}
 async function saveHubSettings(){
   const d={action:'update_hub_settings',school_name:document.getElementById('sSchool').value.trim()};
   const np=document.getElementById('sAdminPw').value;if(np)d.new_admin_password=np;
-  try{await fetch(API,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain'},body:JSON.stringify(d)});cl('mSettings');toast('⚙️ บันทึกแล้ว');load()}catch(e){toast('❌ '+e.message)}
+  try{
+    await fetch(API,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain'},body:JSON.stringify(d)});
+    await fetch(API,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain'},body:JSON.stringify({
+      action:'update_global_registration_settings',
+      data:{
+        registration_enabled:document.getElementById('sGlobalRegEnabled').value==='true',
+        registration_message:document.getElementById('sGlobalRegMsg').value.trim()
+      }
+    })});
+    cl('mSettings');toast('⚙️ บันทึกแล้ว');load();
+  }catch(e){toast('❌ '+e.message)}
+}
+
+function openRegister(){
+  ['rName','rTeacherId','rPassword','rPhone','rEmail'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('registerErr').textContent='';
+  op('mRegister');
+}
+async function submitRegister(){
+  const data={
+    full_name:document.getElementById('rName').value.trim(),
+    teacher_id:document.getElementById('rTeacherId').value.trim(),
+    password:document.getElementById('rPassword').value.trim(),
+    phone:document.getElementById('rPhone').value.trim(),
+    email:document.getElementById('rEmail').value.trim()
+  };
+  try{
+    const r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'register_user',data})});
+    const j=await r.json();
+    if(j.status==='ok'){cl('mRegister');toast('✅ ลงทะเบียนสำเร็จ รอผู้ดูแลอนุมัติ');}
+    else document.getElementById('registerErr').textContent=j.message||'ลงทะเบียนไม่สำเร็จ';
+  }catch(e){document.getElementById('registerErr').textContent=e.message}
 }
 
 function esc(s){if(!s)return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML}
@@ -185,5 +307,6 @@ function toast(m){const t=document.getElementById('toast');t.textContent=m;t.cla
 function op(id){document.getElementById(id).classList.add('show');if(id==='mAdmin'){document.getElementById('adminPw').value='';document.getElementById('adminErr').textContent=''}}
 function cl(id){document.getElementById(id).classList.remove('show')}
 </script>
+
 </body>
 </html>
