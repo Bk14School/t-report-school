@@ -52,6 +52,7 @@ body.editing .sec-tab{outline:none;border:1.5px dashed var(--g3);border-radius:6
 <div class="lbox" id="lbox" onclick="closeLB(event)"><button class="lbox-close" onclick="document.getElementById('lbox').classList.remove('show')">✕</button><img id="lboxImg"><div class="lbox-info" id="lboxInfo"></div></div>
 
 <button class="back-btn" onclick="window.location.href='hub.html?type=' + encodeURIComponent(REPORT_TYPE)">← กลับหน้ารายชื่อครู</button>
+
 <!-- Password Modal -->
 <div class="ov" id="mPw"><div class="mb"><h3>🔐 เข้าสู่โหมดแก้ไข</h3><p class="mdesc">ใส่รหัสผ่านเพื่อแก้ไขข้อมูล</p><input type="password" id="iPw" placeholder="••••••" onkeydown="if(event.key==='Enter')chkPw()"><div class="er" id="ePw"></div><div class="mba"><button class="bc" onclick="cl('mPw')">ยกเลิก</button><button class="bu" onclick="chkPw()">เข้าสู่โหมดแก้ไข</button></div></div></div>
 
@@ -97,14 +98,12 @@ body.editing .sec-tab{outline:none;border:1.5px dashed var(--g3);border-radius:6
 const urlParams = new URLSearchParams(window.location.search);
 const TEACHER_ID = (urlParams.get('id') || '').trim();
 const REPORT_TYPE = (urlParams.get('type') || '').trim();
-
 if (!REPORT_TYPE) {
-  document.body.innerHTML = '<div style="text-align:center;padding:100px 20px"><h2 style="font-family:Prompt,sans-serif;color:#e74c3c">ไม่พบประเภทรายงาน</h2><p style="color:#6b7280;margin:16px 0">กรุณาระบุ ?type=ff ใน URL</p><a href="index.html" style="color:#22a06b;font-family:Prompt,sans-serif">← กลับหน้าหลัก</a></div>';
+  document.body.innerHTML = '<div style="text-align:center;padding:100px 20px"><h2 style="font-family:Prompt,sans-serif;color:#e74c3c">ไม่พบประเภทรายงาน</h2><p style="color:#6b7280;margin:16px 0">กรุณาระบุ ?type=t-report</p><a href="index.html" style="color:#22a06b;font-family:Prompt,sans-serif">← กลับหน้าหลัก</a></div>';
   throw new Error('No report_type');
 }
-
 if (!TEACHER_ID) {
-  document.body.innerHTML = '<div style="text-align:center;padding:100px 20px"><h2 style="font-family:Prompt,sans-serif;color:#e74c3c">ไม่พบ Teacher ID</h2><p style="color:#6b7280;margin:16px 0">กรุณาระบุ ?type='+ encodeURIComponent(REPORT_TYPE) +'&id=xxx ใน URL</p><a href="hub.html?type='+ encodeURIComponent(REPORT_TYPE) +'" style="color:#22a06b;font-family:Prompt,sans-serif">← กลับหน้ารายชื่อครู</a></div>';
+  document.body.innerHTML = '<div style="text-align:center;padding:100px 20px"><h2 style="font-family:Prompt,sans-serif;color:#e74c3c">ไม่พบ Teacher ID</h2><p style="color:#6b7280;margin:16px 0">กรุณาระบุ ?type=' + encodeURIComponent(REPORT_TYPE) + '&id=xxx</p><a href="hub.html?type=' + encodeURIComponent(REPORT_TYPE) + '" style="color:#22a06b;font-family:Prompt,sans-serif">← กลับหน้ารายชื่อครู</a></div>';
   throw new Error('No teacher_id');
 }
 
@@ -116,7 +115,7 @@ function imgUrl(id){return IMGS[id]?IMGS[id].url:''}
 async function loadFromSheet(){
   try{
     showLoading('กำลังโหลดข้อมูล...');
-    const r=await fetch(API+'?action=get_data&report_type='+REPORT_TYPE+'&teacher_id='+encodeURIComponent(TEACHER_ID),{redirect:'follow'});
+    const r=await fetch(API+'?action=get_data&report_type='+encodeURIComponent(REPORT_TYPE)+'&teacher_id='+encodeURIComponent(TEACHER_ID),{redirect:'follow'});
     if(!r.ok)throw new Error('HTTP '+r.status);
     const j=await r.json();
     if(j.status==='ok'){
