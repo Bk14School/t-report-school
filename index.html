@@ -88,7 +88,7 @@
 </div>
 
 <script>
-const API='https://script.google.com/macros/s/AKfycbzWU3DzJHBsMXXAtYU4E2wY_23iPXd2EdVBEZ6KTn2hjZYATQYXQywJDuKXeiIUcO_kjQ/exec';
+const API='https://script.google.com/macros/s/AKfycbx7QLgz3vpuDEDGWEH-sACcVm9v-bJlp9nkvrxvauioLCgf-0qHN8uHhFrhCxQo2U4t/exec';
 let reportTypes=[], hubSettings={}, isAdmin=false;
 const icons=['📋','📊','🔬','📝','📚','🎓','📐','🧪'];
 
@@ -119,7 +119,9 @@ function renderGrid(){
   reportTypes.forEach((rt,i)=>{
     const icon=icons[i%icons.length];
     const date=rt.created?new Date(rt.created).toLocaleDateString('th-TH',{year:'numeric',month:'short'}):'';
-    h+=`<a class="rcard" href="${esc(rt.slug)}/index.html" style="animation-delay:${i*.07}s">
+    const hubUrl='hub.html?type='+encodeURIComponent(rt.slug);
+
+    h+=`<a class="rcard" href="${hubUrl}" style="animation-delay:${i*.07}s">
       <button class="del-badge" onclick="event.preventDefault();event.stopPropagation();deleteRT('${esc(rt.slug)}','${esc(rt.title)}')">✕</button>
       <div class="rcard-banner"></div>
       <div class="rcard-body">
