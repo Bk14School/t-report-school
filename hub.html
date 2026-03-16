@@ -36,13 +36,6 @@
 <a class="back-btn" href="index.html">← หน้าหลักโรงเรียน</a>
 
 <!-- Admin Login Modal -->
-<div class="ov" id="mAdmin"><div class="mb">
-<h3>🔐 เข้าสู่โหมดผู้ดูแล</h3><p class="mdesc">ใส่รหัสผ่าน Admin เพื่อจัดการระบบ</p>
-<input type="password" id="adminPw" placeholder="••••••" onkeydown="if(event.key==='Enter')verifyAdmin()">
-<div class="er" id="adminErr"></div>
-<div class="mba"><button class="btn btn-ghost" onclick="cl('mAdmin')">ยกเลิก</button><button class="btn btn-admin" onclick="verifyAdmin()">เข้าสู่ระบบ</button></div>
-</div></div>
-
 <!-- Create Teacher Modal -->
 <div class="ov" id="mCreate"><div class="mb">
 <h3>👤 เพิ่มครูใหม่</h3><p class="mdesc">สร้างโปรไฟล์รายงานใหม่</p>
@@ -60,8 +53,7 @@
 
 
 <!-- Admin Bar -->
-<div class="admin-bar">
-<div class="ab-left"><div class="dot"></div>โหมดผู้ดูแลระบบ</div>
+โหมดผู้ดูแลระบบ</div>
 <div class="ab-right">
 <button class="btn btn-sm" style="background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.15)" onclick="openCreate()">➕ เพิ่มครู</button>
 <button class="btn btn-sm" style="background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.1)" onclick="exitAdmin()">✕ ออก</button>
@@ -84,48 +76,51 @@
 <div class="stats" id="statsArea"></div>
 <div class="toolbar">
 <div class="search-box"><input type="text" id="searchInput" placeholder="ค้นหาครู..." oninput="filterTeachers()"></div>
-<button class="btn btn-admin" onclick="op('mAdmin')">🔐 ผู้ดูแลระบบ</button>
 </div>
 <div id="teacherGrid" class="grid"></div>
 <div id="loadingArea"></div>
-<div id="pendingArea" style="display:none;margin-top:24px"></div>
-<div id="adminUsersArea" style="display:none;margin-top:24px"></div>
+
+
 </div>
+
 
 <script>
 const API = 'https://script.google.com/macros/s/AKfycbzWU3DzJHBsMXXAtYU4E2wY_23iPXd2EdVBEZ6KTn2hjZYATQYXQywJDuKXeiIUcO_kjQ/exec';
-// ดึงชื่อ report_type จากโฟลเดอร์ใน URL เช่น /t-report/index.html → "t-report"
+
 const urlParams = new URLSearchParams(window.location.search);
 const REPORT_TYPE = (urlParams.get('type') || '').trim();
+
 if (!REPORT_TYPE) {
   document.body.innerHTML = `
     <div style="text-align:center;padding:100px 20px">
       <h2 style="font-family:Prompt,sans-serif;color:#e74c3c">ไม่พบประเภทรายงาน</h2>
       <p style="color:#6b7280;margin:16px 0">กรุณาระบุ ?type=t-report ใน URL</p>
       <a href="index.html" style="color:#22a06b;font-family:Prompt,sans-serif">← กลับหน้าหลัก</a>
-    </div>`;
+    </div>
+  `;
   throw new Error('No report_type');
 }
-let teachers = [], hubSettings = {}, isAdmin = false;
 
-// ═══ INIT ═══
+let teachers = [];
+let hubSettings = {};
+
 document.addEventListener('DOMContentLoaded', loadTeachers);
 
 async function loadTeachers() {
   showLoading();
   try {
-    const r = await fetch(API + '?action=list_teachers&report_type=' + REPORT_TYPE, { redirect: 'follow' });
+    const r = await fetch(API + '?action=list_teachers&report_type=' + encodeURIComponent(REPORT_TYPE), { redirect: 'follow' });
     const j = await r.json();
+
     if (j.status === 'ok') {
       teachers = j.teachers || [];
       hubSettings = j.hub_setting || j.hub_settings || {};
-      const rtTitle = j.report_type ? j.report_type.title : REPORT_TYPE;
-      document.getElementById('schoolName').textContent = rtTitle;
-      document.title = rtTitle + ' — ' + (hubSettings.school_name || '');
+      document.getElementById('schoolName').textContent = j.report_type?.title || REPORT_TYPE;
+      document.title = (j.report_type?.title || REPORT_TYPE) + ' — ' + (hubSettings.school_name || '');
       renderStats();
       renderTeachers();
     } else {
-      showError(j.message);
+      showError(j.message || 'โหลดข้อมูลไม่สำเร็จ');
     }
   } catch (e) {
     showError(e.message);
@@ -139,32 +134,47 @@ function showLoading() {
 }
 
 function showError(m) {
-  document.getElementById('loadingArea').innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><h3>โหลดข้อมูลไม่สำเร็จ</h3><p>${esc(m)}</p><button class="btn btn-primary" onclick="loadTeachers()" style="margin-top:16px">ลองใหม่</button></div>`;
+  document.getElementById('loadingArea').innerHTML = `
+    <div class="empty">
+      <div class="empty-icon">⚠️</div>
+      <h3>โหลดข้อมูลไม่สำเร็จ</h3>
+      <p>${esc(m)}</p>
+      <button class="btn btn-primary" onclick="loadTeachers()" style="margin-top:16px">ลองใหม่</button>
+    </div>`;
 }
 
 function renderStats() {
   document.getElementById('statsArea').innerHTML = `
     <div class="stat-card"><div class="stat-num">${teachers.length}</div><div class="stat-label">จำนวนครูที่เผยแพร่</div></div>
     <div class="stat-card"><div class="stat-num">📋</div><div class="stat-label">Hub: ${esc(REPORT_TYPE)}</div></div>
-    <div class="stat-card"><div class="stat-num">${String(hubSettings.registration_enabled).toUpperCase() === 'TRUE' ? '🟢' : '🔴'}</div><div class="stat-label">${String(hubSettings.registration_enabled).toUpperCase() === 'TRUE' ? 'เปิดรับลงทะเบียน' : 'ปิดรับลงทะเบียน'}</div></div>
+    <div class="stat-card"><div class="stat-num">🌐</div><div class="stat-label">หน้าแสดงผลสาธารณะ</div></div>
   `;
 }
 
 function renderTeachers(filtered) {
   document.getElementById('loadingArea').innerHTML = '';
   const list = filtered || teachers;
+
   if (!list.length) {
-    document.getElementById('teacherGrid').innerHTML = '<div class="empty" style="grid-column:1/-1"><div class="empty-icon">👤</div><h3>ยังไม่มีครูที่เผยแพร่ใน Hub นี้</h3><p>'+esc(hubSettings.registration_message || 'กรุณาติดต่อผู้ดูแลระบบ')+'</p></div>';
+    document.getElementById('teacherGrid').innerHTML = `
+      <div class="empty" style="grid-column:1/-1">
+        <div class="empty-icon">👤</div>
+        <h3>ยังไม่มีครูที่เผยแพร่ใน Hub นี้</h3>
+        <p>ยังไม่มีข้อมูลเผยแพร่ในขณะนี้</p>
+      </div>`;
     return;
   }
+
   let h = '';
   list.forEach(t => {
-    const initials = (t.name || t.id).substring(0, 2);
-    const date = t.created ? new Date(t.created).toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' }) : '';
+    const initials = (t.name || t.id || '').substring(0, 2);
+    const date = t.created ? new Date(t.created).toLocaleDateString('th-TH', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    }) : '';
+
     h += `<div class="tcard" onclick="goToTeacher('${esc(t.id)}')">
-      <div class="admin-btns">
-        <button class="del" onclick="event.stopPropagation();deleteTeacher('${esc(t.id)}','${esc(t.name)}')" title="ลบ">✕</button>
-      </div>
       <div class="tcard-top">
         <div class="tcard-avatar">${esc(initials)}</div>
         <div class="tcard-info">
@@ -178,239 +188,32 @@ function renderTeachers(filtered) {
       </div>
     </div>`;
   });
+
   document.getElementById('teacherGrid').innerHTML = h;
 }
 
 function filterTeachers() {
   const q = document.getElementById('searchInput').value.trim().toLowerCase();
-  if (!q) { renderTeachers(); return; }
+  if (!q) return renderTeachers();
   const filtered = teachers.filter(t =>
-    (t.name || '').toLowerCase().includes(q) || t.id.toLowerCase().includes(q)
+    (t.name || '').toLowerCase().includes(q) ||
+    (t.id || '').toLowerCase().includes(q)
   );
   renderTeachers(filtered);
 }
 
 function goToTeacher(id) {
-  // ไปหน้า report ของครูคนนั้น
-  window.location.href = 'report.html?type=' + encodeURIComponent(REPORT_TYPE) + '&id=' + encodeURIComponent(id);
+  window.location.href =
+    'report.html?type=' + encodeURIComponent(REPORT_TYPE) +
+    '&id=' + encodeURIComponent(id);
 }
 
-// ═══ ADMIN ═══
-async function verifyAdmin() {
-  const pw = document.getElementById('adminPw').value;
-  try {
-    const r = await fetch(API, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: 'verify_admin', password: pw }) });
-    const j = await r.json();
-    if (j.status === 'ok') {
-      isAdmin = true;
-      document.body.classList.add('admin-mode');
-      cl('mAdmin');
-      toast('🔓 เข้าสู่โหมดผู้ดูแล');
-      await loadPendingUsers();
-      await loadAdminUsers();
-      renderTeachers();
-    } else {
-      document.getElementById('adminErr').textContent = 'รหัสผ่านไม่ถูกต้อง';
-      document.getElementById('adminPw').value = '';
-    }
-  } catch (e) {
-    document.getElementById('adminErr').textContent = e.message;
-  }
+function esc(s) {
+  if (!s) return '';
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
 }
-
-function exitAdmin() {
-  isAdmin = false;
-  document.body.classList.remove('admin-mode');
-  document.getElementById('pendingArea').style.display = 'none';
-  document.getElementById('adminUsersArea').style.display = 'none';
-  renderTeachers();
-  toast('🔒 ออกจากโหมดผู้ดูแล');
-}
-
-// ═══ CREATE TEACHER ═══
-function openCreate() {
-  document.getElementById('cName').value = '';
-  document.getElementById('cId').value = '';
-  document.getElementById('cPw').value = '1234';
-  document.getElementById('createErr').textContent = '';
-  document.getElementById('previewUrl').textContent = '/report.html?type=' + REPORT_TYPE + '&id=___';
-  op('mCreate');
-}
-
-document.getElementById('cId')?.addEventListener('input', function () {
-  const v = this.value || '___';
-  document.getElementById('previewUrl').textContent = '/report.html?type=' + REPORT_TYPE + '&id=' + encodeURIComponent(v);
-});
-
-async function createTeacher() {
-  const name = document.getElementById('cName').value.trim();
-  const id = document.getElementById('cId').value.trim();
-  const pw = document.getElementById('cPw').value || '1234';
-  if (!name) { document.getElementById('createErr').textContent = 'กรุณาใส่ชื่อ'; return; }
-  if (!id || id.length < 2) { document.getElementById('createErr').textContent = 'Folder ID ต้องมีอย่างน้อย 2 ตัว (ภาษาอังกฤษ)'; return; }
-  if (teachers.some(t => t.id === id)) { document.getElementById('createErr').textContent = 'ID นี้มีอยู่แล้ว'; return; }
-
-  toast('⏳ กำลังสร้าง...');
-  try {
-    const r = await fetch(API, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: 'create_teacher', report_type: REPORT_TYPE, new_teacher_id: id, display_name: name, password: pw }) });
-    const j = await r.json();
-    if (j.status === 'ok') {
-      cl('mCreate');
-      toast('✅ สร้าง "' + name + '" แล้ว');
-      loadTeachers();
-    } else {
-      document.getElementById('createErr').textContent = j.message;
-    }
-  } catch (e) {
-    document.getElementById('createErr').textContent = e.message;
-  }
-}
-
-// ═══ DELETE TEACHER ═══
-async function deleteTeacher(id, name) {
-  if (!confirm('⚠️ ลบครู "' + name + '" (' + id + ')?\n\nข้อมูลทั้งหมดจะถูกลบ!')) return;
-  toast('🗑️ กำลังลบ...');
-  try {
-    const r = await fetch(API, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: 'delete_teacher', report_type: REPORT_TYPE, delete_teacher_id: id }) });
-    const j = await r.json();
-    if (j.status === 'ok') {
-      toast('🗑️ ลบ "' + name + '" แล้ว');
-      loadTeachers();
-    } else {
-      toast('❌ ' + j.message);
-    }
-  } catch (e) {
-    toast('❌ ' + e.message);
-  }
-}
-
-// ═══ HUB SETTINGS ═══
-
-
-
-
-
-
-async function loadPendingUsers() {
-  const area = document.getElementById('pendingArea');
-  try {
-    const r = await fetch(API, { method:'POST', headers:{'Content-Type':'text/plain'}, body: JSON.stringify({ action:'list_pending_users' }) });
-    const j = await r.json();
-    if (!j.users || !j.users.length) {
-      area.innerHTML = '<div class="card"><div class="ct"><h3>ผู้สมัครรออนุมัติ</h3></div><div class="cbody">ไม่มีผู้สมัครรออนุมัติ</div></div>';
-      area.style.display = 'block';
-      return;
-    }
-    let html = '<div class="card"><div class="ct"><h3>ผู้สมัครรออนุมัติ</h3></div><div class="cbody"><div style="overflow:auto"><table style="width:100%;border-collapse:collapse"><thead><tr><th align="left" style="padding:8px;border-bottom:1px solid #e5e7eb">ชื่อ</th><th align="left" style="padding:8px;border-bottom:1px solid #e5e7eb">ID</th><th align="left" style="padding:8px;border-bottom:1px solid #e5e7eb">โทร</th><th align="left" style="padding:8px;border-bottom:1px solid #e5e7eb">อีเมล</th><th align="left" style="padding:8px;border-bottom:1px solid #e5e7eb">จัดการ</th></tr></thead><tbody>';
-    j.users.forEach(u => {
-      html += `<tr><td style="padding:8px;border-bottom:1px solid #f1f5f9">${esc(u.full_name || '')}</td><td style="padding:8px;border-bottom:1px solid #f1f5f9">${esc(u.teacher_id || '')}</td><td style="padding:8px;border-bottom:1px solid #f1f5f9">${esc(u.phone || '')}</td><td style="padding:8px;border-bottom:1px solid #f1f5f9">${esc(u.email || '')}</td><td style="padding:8px;border-bottom:1px solid #f1f5f9"><button class="btn btn-primary btn-sm" onclick="approveOnly('${esc(u.teacher_id || '')}')">อนุมัติ</button> <button class="btn btn-danger btn-sm" onclick="suspendUser('${esc(u.teacher_id || '')}')">ระงับ</button></td></tr>`;
-    });
-    html += '</tbody></table></div></div></div>';
-    area.innerHTML = html;
-    area.style.display = 'block';
-  } catch (e) {
-    area.innerHTML = `<div class="empty">โหลด pending ไม่สำเร็จ: ${esc(e.message)}</div>`;
-    area.style.display = 'block';
-  }
-}
-
-async function loadAdminUsers() {
-  const area = document.getElementById('adminUsersArea');
-  try {
-    const r = await fetch(API, { method:'POST', headers:{'Content-Type':'text/plain'}, body: JSON.stringify({ action:'list_users_for_hub_admin', report_type: REPORT_TYPE }) });
-    const j = await r.json();
-    adminUsers = j.users || [];
-    let html = '<div class="card"><div class="ct"><h3>จัดการการแสดงผลใน Hub นี้</h3></div><div class="cbody"><div style="overflow:auto"><table style="width:100%;border-collapse:collapse"><thead><tr><th align="left" style="padding:8px;border-bottom:1px solid #e5e7eb">ชื่อ</th><th align="left" style="padding:8px;border-bottom:1px solid #e5e7eb">ID</th><th align="left" style="padding:8px;border-bottom:1px solid #e5e7eb">สถานะ</th><th align="left" style="padding:8px;border-bottom:1px solid #e5e7eb">เผยแพร่</th></tr></thead><tbody>';
-    adminUsers.forEach(u => {
-      html += `<tr><td style="padding:8px;border-bottom:1px solid #f1f5f9">${esc(u.full_name || '')}</td><td style="padding:8px;border-bottom:1px solid #f1f5f9">${esc(u.teacher_id || '')}</td><td style="padding:8px;border-bottom:1px solid #f1f5f9">${esc(u.status || '')}</td><td style="padding:8px;border-bottom:1px solid #f1f5f9"><label style="display:inline-flex;align-items:center;gap:8px"><input type="checkbox" ${u.is_visible ? 'checked' : ''} onchange="toggleVisible('${esc(u.teacher_id || '')}', this.checked)"><span>${u.is_visible ? 'แสดง' : 'ซ่อน'}</span></label></td></tr>`;
-    });
-    html += '</tbody></table></div></div></div>';
-    area.innerHTML = html;
-    area.style.display = 'block';
-  } catch (e) {
-    area.innerHTML = `<div class="empty">โหลดรายการจัดการผู้ใช้ไม่สำเร็จ: ${esc(e.message)}</div>`;
-    area.style.display = 'block';
-  }
-}
-
-async function approveOnly(teacherId) {
-  try {
-    const r = await fetch(API, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({
-        action: 'approve_user',
-        data: {
-          teacher_id: teacherId,
-          hub_slug: REPORT_TYPE,
-          is_visible: false
-        }
-      })
-    });
-    const j = await r.json();
-    toast(j.status === 'ok' ? '✅ อนุมัติแล้ว (ยังไม่เผยแพร่)' : '❌ ' + (j.message || 'เกิดข้อผิดพลาด'));
-    await loadPendingUsers();
-    await loadAdminUsers();
-    await loadTeachers();
-  } catch (e) {
-    toast('❌ ' + e.message);
-  }
-}
-
-async function approveAndPublish(teacherId) {
-  try {
-    const r = await fetch(API, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({
-        action: 'approve_user',
-        data: {
-          teacher_id: teacherId,
-          hub_slug: REPORT_TYPE,
-          is_visible: true
-        }
-      })
-    });
-    const j = await r.json();
-    toast(j.status === 'ok' ? '✅ อนุมัติและเผยแพร่แล้ว' : '❌ ' + (j.message || 'เกิดข้อผิดพลาด'));
-    await loadPendingUsers();
-    await loadAdminUsers();
-    await loadTeachers();
-  } catch (e) {
-    toast('❌ ' + e.message);
-  }
-}
-
-async function suspendUser(teacherId) {
-  try {
-    const r = await fetch(API, { method:'POST', headers:{'Content-Type':'text/plain'}, body: JSON.stringify({ action:'suspend_user', data:{ teacher_id: teacherId } }) });
-    const j = await r.json();
-    toast(j.status === 'ok' ? '⛔ ระงับแล้ว' : '❌ ' + j.message);
-    await loadPendingUsers();
-    await loadAdminUsers();
-    await loadTeachers();
-  } catch (e) {
-    toast('❌ ' + e.message);
-  }
-}
-
-async function toggleVisible(teacherId, visible) {
-  try {
-    const r = await fetch(API, { method:'POST', headers:{'Content-Type':'text/plain'}, body: JSON.stringify({ action:'set_user_hub_visibility', data:{ teacher_id: teacherId, hub_slug: REPORT_TYPE, is_visible: visible } }) });
-    const j = await r.json();
-    toast(j.status === 'ok' ? '💾 บันทึกแล้ว' : '❌ ' + j.message);
-    if (isAdmin) await loadAdminUsers();
-    await loadTeachers();
-  } catch (e) {
-    toast('❌ ' + e.message);
-  }
-}
-
-// ═══ UTILS ═══
-function esc(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
-function toast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2800); }
-function op(id) { document.getElementById(id).classList.add('show'); }
-function cl(id) { document.getElementById(id).classList.remove('show'); }
 </script>
+
 </body>
-</html>
