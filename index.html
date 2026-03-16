@@ -125,7 +125,7 @@ async function load(){
     const r=await fetch(API+'?action=list_report_types',{redirect:'follow'});
     const j=await r.json();
     if(j.status==='ok'){
-      reportTypes=j.report_types||[];
+      reportTypes=j.report_types||[]; 
       hubSettings=j.hub_settings||{};
       document.getElementById('schoolTitle').textContent='ระบบรายงานออนไลน์'+(hubSettings.school_name?'
 '+hubSettings.school_name:'');
