@@ -1,4 +1,4 @@
-  <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="th">
 <head>
 <meta charset="UTF-8">
@@ -127,8 +127,7 @@ async function load(){
     if(j.status==='ok'){
       reportTypes=j.report_types||[];
       hubSettings=j.hub_settings||{};
-      document.getElementById('schoolTitle').textContent='ระบบรายงานออนไลน์'+(hubSettings.school_name?'
-'+hubSettings.school_name:'');
+      document.getElementById('schoolTitle').textContent='ระบบรายงานออนไลน์'+(hubSettings.school_name?'\n'+hubSettings.school_name:'');
       renderGrid();
       syncRegistrationButton();
       if(isAdmin) {
@@ -352,9 +351,7 @@ async function createReportType(){
 }
 
 async function deleteRT(slug,title){
-  if(!confirm('⚠️ ลบ "'+title+'" ('+slug+')?
-
-ทั้งโฟลเดอร์ ข้อมูลครู และรูปจะถูกลบ!'))return;
+  if(!confirm('⚠️ ลบ "'+title+'" ('+slug+')?\n\nทั้งโฟลเดอร์ ข้อมูลครู และรูปจะถูกลบ!'))return;
   toast('🗑️ กำลังลบ...');
   try{
     const r=await fetch(API,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'delete_report_type',slug,admin_password:adminPassword})});
