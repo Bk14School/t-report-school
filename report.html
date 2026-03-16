@@ -107,7 +107,7 @@ if (!TEACHER_ID) {
   throw new Error('No teacher_id');
 }
 
-let D={},IMGS={},activeTab='',imgTarget=null,isHiddenView=false;
+let D={},IMGS={},activeTab='',imgTarget=null,isHiddenView=false,teacherPassword='';
 const API='https://script.google.com/macros/s/AKfycbzWU3DzJHBsMXXAtYU4E2wY_23iPXd2EdVBEZ6KTn2hjZYATQYXQywJDuKXeiIUcO_kjQ/exec';
 
 function imgUrl(id){return IMGS[id]?IMGS[id].url:''}
@@ -133,7 +133,7 @@ async function saveToSheet(){
   collect();
   try{
     toast('☁️ กำลังบันทึก...');
-    const r=await fetch(API,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'save_all',report_type:REPORT_TYPE,teacher_id:TEACHER_ID,data:D})});
+    const r=await fetch(API,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'save_all',report_type:REPORT_TYPE,teacher_id:TEACHER_ID,password:teacherPassword,data:D})});
     const j=await r.json();
     toast(j.status==='ok'?'💾 บันทึกเรียบร้อย':'❌ '+j.message)
   }catch(e){toast('❌ '+e.message)}
@@ -141,14 +141,14 @@ async function saveToSheet(){
 
 async function uploadImage(b64,bid){
   const id='img_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);
-  const r=await fetch(API,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'upload_image',report_type:REPORT_TYPE,base64:b64,fileName:id+'.jpg',image_id:id,block_id:bid,teacher_id:TEACHER_ID})});
+  const r=await fetch(API,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'upload_image',report_type:REPORT_TYPE,base64:b64,fileName:id+'.jpg',image_id:id,block_id:bid,teacher_id:TEACHER_ID,password:teacherPassword})});
   const j=await r.json();
   if(j.status==='ok'){IMGS[j.image_id]={id:j.image_id,url:j.url};return j.image_id}
   throw new Error(j.message||'Upload failed')
 }
 
 async function deleteImage(id){
-  fetch(API,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'delete_image',report_type:REPORT_TYPE,image_id:id,teacher_id:TEACHER_ID})}).catch(()=>{});
+  fetch(API,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'delete_image',report_type:REPORT_TYPE,image_id:id,teacher_id:TEACHER_ID,password:teacherPassword})}).catch(()=>{});
   delete IMGS[id]
 }
 
@@ -188,6 +188,21 @@ function collect(){document.querySelectorAll('.ed[data-s]').forEach(el=>{const s
 
 function delInfoField(sk,bi,key){if(!confirm('ลบช่อง "'+key+'"?'))return;collect();const d=D[sk].blocks[bi].data;if(d)delete d[key];saveToSheet();render();enableEdit()}
 
+async function loadPrivateData(pw){
+  try{
+    showLoading('กำลังโหลดข้อมูล (โหมดแก้ไข)...');
+    const r=await fetch(API,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'get_private_data',report_type:REPORT_TYPE,teacher_id:TEACHER_ID,password:pw})});
+    const j=await r.json();
+    if(j.status==='ok'){
+      D={};
+      for(const[k,v]of Object.entries(j.data||{}))D[k]=(typeof v==='string')?JSON.parse(v):v;
+      IMGS=j.images||{};
+      document.title=(j.teacher?.name||TEACHER_ID)+' — รายงานผลการปฏิบัติงาน';
+      activeTab='';render()
+    }else showError(j.message||'โหลดไม่ได้')
+  }catch(e){showError(e.message)}
+}
+
 // ═══ PASSWORD CHECK — ใช้ API verify ═══
 async function chkPw(){
   const pw=document.getElementById('iPw').value;
@@ -195,6 +210,7 @@ async function chkPw(){
     const r=await fetch(API,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'verify_teacher',report_type:REPORT_TYPE,teacher_id:TEACHER_ID,password:pw})});
     const j=await r.json();
     if(j.status==='ok'){
+      teacherPassword=pw;
       await loadPrivateData(pw);
       cl('mPw');document.body.classList.add('editing');enableEdit();toast('🔓 เข้าสู่โหมดแก้ไข')
     }else{
@@ -203,7 +219,10 @@ async function chkPw(){
 }
 
 function enableEdit(){document.querySelectorAll('.ed').forEach(el=>el.contentEditable='true');document.querySelectorAll('.ic-key').forEach(el=>el.contentEditable='true')}
-function exitEdit(){collect();saveToSheet();document.body.classList.remove('editing');render()}
+function exitEdit(){collect();saveToSheet();teacherPassword='';document.body.classList.remove('editing');render()}
+
+// ═══ BEFOREUNLOAD WARNING ═══
+window.addEventListener('beforeunload',function(e){if(document.body.classList.contains('editing')){e.preventDefault();e.returnValue='คุณมีข้อมูลที่ยังไม่ได้บันทึก ต้องการออกหรือไม่?'}});
 function moveBlock(sk,i,dir){collect();const bl=D[sk].blocks,ni=i+dir;if(ni<0||ni>=bl.length)return;[bl[i],bl[ni]]=[bl[ni],bl[i]];saveToSheet();render();enableEdit()}
 function delBlock(sk,i){if(!confirm('ลบ?'))return;collect();D[sk].blocks.splice(i,1);saveToSheet();render();enableEdit()}
 
@@ -215,7 +234,7 @@ function addCheckItem(sk,bi){collect();D[sk].blocks[bi].items.push({label:'',des
 function confirmAddSection(){const tab=document.getElementById('asTab').value.trim()||'หน้าใหม่',icon=document.getElementById('asIcon').value.trim()||'📄',heading=document.getElementById('asHead').value.trim();collect();const mx=secKeys().reduce((m,k)=>Math.max(m,parseInt(k.split('_')[1])||0),0);D['sec_'+(mx+1)]={tab,icon,heading,blocks:[]};cl('mAs');activeTab='sec_'+(mx+1);saveToSheet();render();enableEdit();toast('📂 เพิ่ม "'+tab+'"')}
 
 function openSettings(){const s=D.settings||{};document.getElementById('sTitle').value=s.title||'';document.getElementById('sSub').value=s.subtitle||'';document.getElementById('sSchool').value=s.school||'';document.getElementById('sPos').value=s.position||'';document.getElementById('sPeriod').value=s.period||'';document.getElementById('sNewPw').value='';op('mSt')}
-function saveSettings(){if(!D.settings)D.settings={};const oldPw=D.settings.password||'';D.settings.title=document.getElementById('sTitle').value;D.settings.subtitle=document.getElementById('sSub').value;D.settings.school=document.getElementById('sSchool').value;D.settings.position=document.getElementById('sPos').value;D.settings.period=document.getElementById('sPeriod').value;const np=document.getElementById('sNewPw').value;if(np){D.settings.password=np;fetch(API,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'change_password',report_type:REPORT_TYPE,teacher_id:TEACHER_ID,old_password:oldPw,new_password:np})}).catch(()=>{})}cl('mSt');saveToSheet();renderHero();toast('⚙️ บันทึกแล้ว')}
+function saveSettings(){if(!D.settings)D.settings={};D.settings.title=document.getElementById('sTitle').value;D.settings.subtitle=document.getElementById('sSub').value;D.settings.school=document.getElementById('sSchool').value;D.settings.position=document.getElementById('sPos').value;D.settings.period=document.getElementById('sPeriod').value;const np=document.getElementById('sNewPw').value;if(np){D.settings.password=np;fetch(API,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'change_password',report_type:REPORT_TYPE,teacher_id:TEACHER_ID,old_password:teacherPassword,new_password:np})}).then(r=>r.json()).then(j=>{if(j.status==='ok')teacherPassword=np}).catch(()=>{})}cl('mSt');saveToSheet();renderHero();toast('⚙️ บันทึกแล้ว')}
 
 // ═══ SIGNATURE ═══
 let sigTarget=null,sigCtx=null,sigDrawing=false;
@@ -223,7 +242,7 @@ function openSigModal(sk,bi){sigTarget={sk,bi};const b=D[sk].blocks[bi];document
 function verifySigPin(){const b=D[sigTarget.sk].blocks[sigTarget.bi];const pin=document.getElementById('sigPin').value;if(pin!==b.sig_pin){document.getElementById('sigErr').textContent='❌ รหัส PIN ไม่ถูกต้อง';document.getElementById('sigPin').value='';return}document.getElementById('sigErr').textContent='';document.getElementById('sigCanvas').style.display='block';document.getElementById('sigBtnPre').style.display='none';initSigCanvas()}
 function initSigCanvas(){const cv=document.getElementById('sigPad');const rect=cv.parentElement.getBoundingClientRect();cv.width=Math.floor(rect.width);cv.height=200;sigCtx=cv.getContext('2d');sigCtx.lineWidth=2.5;sigCtx.lineCap='round';sigCtx.lineJoin='round';sigCtx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--e1').trim()||'#0c3b2e';sigDrawing=false;cv.onpointerdown=e=>{sigDrawing=true;sigCtx.beginPath();const r=cv.getBoundingClientRect();sigCtx.moveTo(e.clientX-r.left,e.clientY-r.top)};cv.onpointermove=e=>{if(!sigDrawing)return;const r=cv.getBoundingClientRect();sigCtx.lineTo(e.clientX-r.left,e.clientY-r.top);sigCtx.stroke()};cv.onpointerup=()=>sigDrawing=false;cv.onpointerleave=()=>sigDrawing=false;cv.setPointerCapture&&cv.addEventListener('gotpointercapture',e=>e.target.releasePointerCapture(e.pointerId))}
 function clearSig(){const cv=document.getElementById('sigPad');sigCtx.clearRect(0,0,cv.width,cv.height)}
-async function saveSig(){const cv=document.getElementById('sigPad');const data=cv.toDataURL('image/png');const b=D[sigTarget.sk].blocks[sigTarget.bi];cl('mSig');toast('📤 กำลังบันทึกลายเซ็น...');try{const id='sig_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);const r=await fetch(API,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'upload_image',report_type:REPORT_TYPE,base64:data,fileName:id+'.png',image_id:id,block_id:b.id||'',teacher_id:TEACHER_ID})});const j=await r.json();if(j.status==='ok'){b.sig_data=j.url;b.sig_image_id=j.image_id}else{b.sig_data=data}}catch(e){b.sig_data=data}b.sig_date=new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});saveToSheet();render();if(document.body.classList.contains('editing'))enableEdit();toast('✍️ ลงนามเรียบร้อย')}
+async function saveSig(){const cv=document.getElementById('sigPad');const data=cv.toDataURL('image/png');const b=D[sigTarget.sk].blocks[sigTarget.bi];cl('mSig');toast('📤 กำลังบันทึกลายเซ็น...');try{const id='sig_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);const r=await fetch(API,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'upload_image',report_type:REPORT_TYPE,base64:data,fileName:id+'.png',image_id:id,block_id:b.id||'',teacher_id:TEACHER_ID,password:teacherPassword})});const j=await r.json();if(j.status==='ok'){b.sig_data=j.url;b.sig_image_id=j.image_id}else{b.sig_data=data}}catch(e){b.sig_data=data}b.sig_date=new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});saveToSheet();render();if(document.body.classList.contains('editing'))enableEdit();toast('✍️ ลงนามเรียบร้อย')}
 function clearSigData(sk,bi){const b=D[sk].blocks[bi];const pin=prompt('🔑 ใส่รหัส PIN เพื่อล้างลายเซ็น:');if(!pin)return;if(pin!==b.sig_pin){toast('❌ รหัส PIN ไม่ถูกต้อง');return}collect();if(b.sig_image_id)deleteImage(b.sig_image_id);b.sig_data='';b.sig_date='';b.sig_image_id='';saveToSheet();render();if(document.body.classList.contains('editing'))enableEdit();toast('🗑️ ล้างลายเซ็นแล้ว')}
 
 // ═══ NAV ═══
