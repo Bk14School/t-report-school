@@ -430,9 +430,26 @@ async function loadAdminUsers() {
 
 async function approveUser(teacherId) {
   try {
-    const r = await fetch(API, { method:'POST', headers:{'Content-Type':'text/plain'}, body: JSON.stringify({ action:'approve_user', data:{ teacher_id: teacherId } }) });
+    const r = await fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({
+        action: 'approve_user',
+        data: {
+          teacher_id: teacherId,
+          hub_slug: REPORT_TYPE,
+          is_visible: true
+        }
+      })
+    });
+
     const j = await r.json();
-    toast(j.status === 'ok' ? '✅ อนุมัติแล้ว' : '❌ ' + j.message);
+
+    toast(j.status === 'ok'
+      ? '✅ อนุมัติและเผยแพร่แล้ว'
+      : '❌ ' + (j.message || 'เกิดข้อผิดพลาด')
+    );
+
     await loadPendingUsers();
     await loadAdminUsers();
     await loadTeachers();
