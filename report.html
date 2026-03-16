@@ -51,8 +51,7 @@ body.editing .sec-tab{outline:none;border:1.5px dashed var(--g3);border-radius:6
 <div class="toast" id="toast"></div>
 <div class="lbox" id="lbox" onclick="closeLB(event)"><button class="lbox-close" onclick="document.getElementById('lbox').classList.remove('show')">✕</button><img id="lboxImg"><div class="lbox-info" id="lboxInfo"></div></div>
 
-<button class="back-btn" onclick="window.location.href='index.html'">← กลับหน้ารายชื่อครู</button>
-
+<button class="back-btn" onclick="window.location.href='hub.html?type=' + encodeURIComponent(REPORT_TYPE)">← กลับหน้ารายชื่อครู</button>
 <!-- Password Modal -->
 <div class="ov" id="mPw"><div class="mb"><h3>🔐 เข้าสู่โหมดแก้ไข</h3><p class="mdesc">ใส่รหัสผ่านเพื่อแก้ไขข้อมูล</p><input type="password" id="iPw" placeholder="••••••" onkeydown="if(event.key==='Enter')chkPw()"><div class="er" id="ePw"></div><div class="mba"><button class="bc" onclick="cl('mPw')">ยกเลิก</button><button class="bu" onclick="chkPw()">เข้าสู่โหมดแก้ไข</button></div></div></div>
 
@@ -96,16 +95,21 @@ body.editing .sec-tab{outline:none;border:1.5px dashed var(--g3);border-radius:6
 <script>
 // ═══ GET TEACHER ID FROM URL ═══
 const urlParams = new URLSearchParams(window.location.search);
-const TEACHER_ID = urlParams.get('id') || '';
+const TEACHER_ID = (urlParams.get('id') || '').trim();
+const REPORT_TYPE = (urlParams.get('type') || '').trim();
+
+if (!REPORT_TYPE) {
+  document.body.innerHTML = '<div style="text-align:center;padding:100px 20px"><h2 style="font-family:Prompt,sans-serif;color:#e74c3c">ไม่พบประเภทรายงาน</h2><p style="color:#6b7280;margin:16px 0">กรุณาระบุ ?type=ff ใน URL</p><a href="index.html" style="color:#22a06b;font-family:Prompt,sans-serif">← กลับหน้าหลัก</a></div>';
+  throw new Error('No report_type');
+}
+
 if (!TEACHER_ID) {
-  document.body.innerHTML = '<div style="text-align:center;padding:100px 20px"><h2 style="font-family:Prompt,sans-serif;color:#e74c3c">ไม่พบ Teacher ID</h2><p style="color:#6b7280;margin:16px 0">กรุณาระบุ ?id=xxx ใน URL</p><a href="index.html" style="color:#22a06b;font-family:Prompt,sans-serif">← กลับหน้าหลัก</a></div>';
+  document.body.innerHTML = '<div style="text-align:center;padding:100px 20px"><h2 style="font-family:Prompt,sans-serif;color:#e74c3c">ไม่พบ Teacher ID</h2><p style="color:#6b7280;margin:16px 0">กรุณาระบุ ?type='+ encodeURIComponent(REPORT_TYPE) +'&id=xxx ใน URL</p><a href="hub.html?type='+ encodeURIComponent(REPORT_TYPE) +'" style="color:#22a06b;font-family:Prompt,sans-serif">← กลับหน้ารายชื่อครู</a></div>';
   throw new Error('No teacher_id');
 }
 
 let D={},IMGS={},activeTab='',imgTarget=null;
-const API='https://script.google.com/macros/s/AKfycbzWU3DzJHBsMXXAtYU4E2wY_23iPXd2EdVBEZ6KTn2hjZYATQYXQywJDuKXeiIUcO_kjQ/exec';
-const pathParts=window.location.pathname.split('/').filter(Boolean);
-const REPORT_TYPE=pathParts.length>=2?pathParts[pathParts.length-2]:pathParts[0]||'t-report';
+const API='https://script.google.com/macros/s/AKfycbx7QLgz3vpuDEDGWEH-sACcVm9v-bJlp9nkvrxvauioLCgf-0qHN8uHhFrhCxQo2U4t/exec';
 
 function imgUrl(id){return IMGS[id]?IMGS[id].url:''}
 
