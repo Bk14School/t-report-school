@@ -120,7 +120,6 @@ function renderGrid(){
     const icon=icons[i%icons.length];
     const date=rt.created?new Date(rt.created).toLocaleDateString('th-TH',{year:'numeric',month:'short'}):'';
     const hubUrl='hub.html?type='+encodeURIComponent(rt.slug);
-
     h+=`<a class="rcard" href="${hubUrl}" style="animation-delay:${i*.07}s">
       <button class="del-badge" onclick="event.preventDefault();event.stopPropagation();deleteRT('${esc(rt.slug)}','${esc(rt.title)}')">✕</button>
       <div class="rcard-banner"></div>
