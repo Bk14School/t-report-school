@@ -107,7 +107,7 @@ if (!TEACHER_ID) {
   throw new Error('No teacher_id');
 }
 
-let D={},IMGS={},activeTab='',imgTarget=null;
+let D={},IMGS={},activeTab='',imgTarget=null,isHiddenView=false;
 const API='https://script.google.com/macros/s/AKfycbzWU3DzJHBsMXXAtYU4E2wY_23iPXd2EdVBEZ6KTn2hjZYATQYXQywJDuKXeiIUcO_kjQ/exec';
 
 function imgUrl(id){return IMGS[id]?IMGS[id].url:''}
@@ -195,7 +195,8 @@ async function chkPw(){
     const r=await fetch(API,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'verify_teacher',report_type:REPORT_TYPE,teacher_id:TEACHER_ID,password:pw})});
     const j=await r.json();
     if(j.status==='ok'){
-      cl('mPw');document.body.classList.add('editing');render();enableEdit();toast('🔓 เข้าสู่โหมดแก้ไข')
+      await loadPrivateData(pw);
+      cl('mPw');document.body.classList.add('editing');enableEdit();toast('🔓 เข้าสู่โหมดแก้ไข')
     }else{
       document.getElementById('ePw').textContent='รหัสผ่านไม่ถูกต้อง';document.getElementById('iPw').value=''}
   }catch(e){document.getElementById('ePw').textContent=e.message}
