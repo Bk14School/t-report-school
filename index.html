@@ -125,9 +125,7 @@ async function load(){
     if(j.status==='ok'){
       reportTypes=j.report_types||[];
       hubSettings=j.hub_settings||{};
-     document.getElementById('schoolTitle').textContent =
-  'ระบบรายงานออนไลน์ ' + (hubSettings.school_name || '');
-      renderGrid();
+document.getElementById('schoolTitle').textContent =  'ระบบรายงานออนไลน์' + (hubSettings.school_name ? '\n' + hubSettings.school_name : '');      renderGrid();
       syncRegistrationButton();
       if(isAdmin) loadPendingUsers();
     }else showErr(j.message);
@@ -152,8 +150,8 @@ function renderGrid(){
     const date=rt.created?new Date(rt.created).toLocaleDateString('th-TH',{year:'numeric',month:'short'}):'';
     const hubUrl='hub.html?type='+encodeURIComponent(rt.slug);
 
-h+=`<a class="rcard" href="${hubUrl}" style="animation-delay:${i*.07}s">`;
-    <button class="del-badge" onclick="event.preventDefault();event.stopPropagation();deleteRT('${esc(rt.slug)}','${esc(rt.title)}')">✕</button>
+    h+=`<a class="rcard" href="${hubUrl}" style="animation-delay:${i*.07}s">
+      <button class="del-badge" onclick="event.preventDefault();event.stopPropagation();deleteRT('${esc(rt.slug)}','${esc(rt.title)}')">✕</button>
       <div class="rcard-banner"></div>
       <div class="rcard-body">
         <div class="rcard-icon">${icon}</div>
@@ -247,9 +245,7 @@ async function createReportType(){
 }
 
 async function deleteRT(slug,title){
-  if(!confirm('⚠️ ลบ "'+title+'" ('+slug+')?
-
-ทั้งโฟลเดอร์ ข้อมูลครู และรูปจะถูกลบ!'))return;
+if(!confirm('⚠️ ลบ "'+title+'" ('+slug+')?\n\nทั้งโฟลเดอร์ ข้อมูลครู และรูปจะถูกลบ!')) return;
   toast('🗑️ กำลังลบ...');
   try{
     const r=await fetch(API,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'delete_report_type',slug})});
