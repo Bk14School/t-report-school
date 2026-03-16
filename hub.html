@@ -36,6 +36,13 @@
 <a class="back-btn" href="index.html">← หน้าหลักโรงเรียน</a>
 
 <!-- Admin Login Modal -->
+<div class="ov" id="mAdmin"><div class="mb">
+<h3>🔐 เข้าสู่โหมดผู้ดูแล</h3><p class="mdesc">ใส่รหัสผ่าน Admin</p>
+<input type="password" id="adminPw" placeholder="••••••" onkeydown="if(event.key==='Enter')verifyAdmin()">
+<div class="er" id="adminErr"></div>
+<div class="mba"><button class="btn btn-ghost" onclick="cl('mAdmin')">ยกเลิก</button><button class="btn btn-admin" style="background:linear-gradient(135deg,var(--g2),var(--g3));color:#fff" onclick="verifyAdmin()">เข้าสู่ระบบ</button></div>
+</div></div>
+
 <!-- Create Teacher Modal -->
 <div class="ov" id="mCreate"><div class="mb">
 <h3>👤 เพิ่มครูใหม่</h3><p class="mdesc">สร้างโปรไฟล์รายงานใหม่</p>
@@ -50,9 +57,14 @@
 <div class="mba"><button class="btn btn-ghost" onclick="cl('mCreate')">ยกเลิก</button><button class="btn btn-primary" onclick="createTeacher()">สร้างครู</button></div>
 </div></div>
 
-
-
-
+<!-- Admin Bar -->
+<div class="admin-bar">
+<div class="ab-left"><div class="dot"></div>โหมดผู้ดูแลระบบ</div>
+<div class="ab-right">
+<button class="btn btn-sm" style="background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.15)" onclick="openCreate()">➕ เพิ่มครู</button>
+<button class="btn btn-sm" style="background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.1)" onclick="exitAdmin()">✕ ออก</button>
+</div>
+</div>
 
 <header class="hero">
 <div class="hero-bg"><div class="orb orb-1"></div><div class="orb orb-2"></div><div class="hero-pattern"></div></div>
@@ -70,6 +82,7 @@
 <div class="stats" id="statsArea"></div>
 <div class="toolbar">
 <div class="search-box"><input type="text" id="searchInput" placeholder="ค้นหาครู..." oninput="filterTeachers()"></div>
+<button class="btn btn-admin" style="background:linear-gradient(135deg,var(--g2),var(--g3));color:#fff" onclick="op('mAdmin')">🔐 ผู้ดูแลระบบ</button>
 </div>
 <div id="teacherGrid" class="grid"></div>
 <div id="loadingArea"></div>
@@ -97,6 +110,8 @@ if (!REPORT_TYPE) {
 
 let teachers = [];
 let hubSettings = {};
+let isAdmin = false;
+let adminPassword = '';
 
 document.addEventListener('DOMContentLoaded', loadTeachers);
 
@@ -169,6 +184,9 @@ function renderTeachers(filtered) {
     }) : '';
 
     h += `<div class="tcard" onclick="goToTeacher('${esc(t.id)}')">
+      <div class="admin-btns">
+        <button class="del" onclick="event.stopPropagation();deleteTeacher('${esc(t.id)}','${esc(t.name||t.id)}')" title="ลบครู">✕</button>
+      </div>
       <div class="tcard-top">
         <div class="tcard-avatar">${esc(initials)}</div>
         <div class="tcard-info">
@@ -202,12 +220,81 @@ function goToTeacher(id) {
     '&id=' + encodeURIComponent(id);
 }
 
+// ═══ ADMIN ═══
+async function verifyAdmin() {
+  const pw = document.getElementById('adminPw').value;
+  try {
+    const r = await fetch(API, {method:'POST', redirect:'follow', headers:{'Content-Type':'text/plain'}, body:JSON.stringify({action:'verify_admin', password:pw})});
+    const j = await r.json();
+    if (j.status === 'ok') {
+      isAdmin = true;
+      adminPassword = pw;
+      document.body.classList.add('admin-mode');
+      cl('mAdmin');
+      toast('🔓 เข้าสู่โหมดผู้ดูแล');
+    } else {
+      document.getElementById('adminErr').textContent = 'รหัสไม่ถูกต้อง';
+      document.getElementById('adminPw').value = '';
+    }
+  } catch(e) { document.getElementById('adminErr').textContent = e.message; }
+}
+
+function exitAdmin() {
+  isAdmin = false;
+  adminPassword = '';
+  document.body.classList.remove('admin-mode');
+  toast('🔒 ออกจากโหมดผู้ดูแล');
+}
+
+function openCreate() {
+  document.getElementById('cName').value = '';
+  document.getElementById('cId').value = '';
+  document.getElementById('cPw').value = '1234';
+  document.getElementById('createErr').textContent = '';
+  document.getElementById('previewUrl').textContent = 'report.html?type=' + REPORT_TYPE + '&id=___';
+  op('mCreate');
+}
+
+async function createTeacher() {
+  const name = document.getElementById('cName').value.trim();
+  const id = document.getElementById('cId').value.trim();
+  const pw = document.getElementById('cPw').value.trim() || '1234';
+  if (!name) { document.getElementById('createErr').textContent = 'กรุณาใส่ชื่อ'; return; }
+  if (!id || id.length < 2) { document.getElementById('createErr').textContent = 'ID ต้องมีอย่างน้อย 2 ตัว (ภาษาอังกฤษ)'; return; }
+  toast('⏳ กำลังสร้าง...');
+  try {
+    const r = await fetch(API, {method:'POST', redirect:'follow', headers:{'Content-Type':'text/plain'}, body:JSON.stringify({
+      action:'create_teacher', report_type:REPORT_TYPE, new_teacher_id:id, display_name:name, password:pw, admin_password:adminPassword
+    })});
+    const j = await r.json();
+    if (j.status === 'ok') { cl('mCreate'); toast('✅ สร้าง "'+name+'" แล้ว'); loadTeachers(); }
+    else document.getElementById('createErr').textContent = j.message;
+  } catch(e) { document.getElementById('createErr').textContent = e.message; }
+}
+
+async function deleteTeacher(id, name) {
+  if (!confirm('⚠️ ลบ "'+name+'" ('+id+')?\n\nข้อมูลรายงานและรูปจะถูกลบ!')) return;
+  toast('🗑️ กำลังลบ...');
+  try {
+    const r = await fetch(API, {method:'POST', redirect:'follow', headers:{'Content-Type':'text/plain'}, body:JSON.stringify({
+      action:'delete_teacher', report_type:REPORT_TYPE, delete_teacher_id:id, admin_password:adminPassword
+    })});
+    const j = await r.json();
+    toast(j.status === 'ok' ? '🗑️ ลบแล้ว' : '❌ ' + j.message);
+    loadTeachers();
+  } catch(e) { toast('❌ '+e.message); }
+}
+
+// ═══ UTILS ═══
 function esc(s) {
   if (!s) return '';
   const d = document.createElement('div');
   d.textContent = s;
   return d.innerHTML;
 }
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800)}
+function op(id){document.getElementById(id).classList.add('show');if(id==='mAdmin'){document.getElementById('adminPw').value='';document.getElementById('adminErr').textContent='';setTimeout(()=>document.getElementById('adminPw').focus(),200)}}
+function cl(id){document.getElementById(id).classList.remove('show')}
 </script>
 
 </body>
