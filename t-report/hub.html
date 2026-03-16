@@ -237,13 +237,14 @@ function openCreate() {
   document.getElementById('cId').value = '';
   document.getElementById('cPw').value = '1234';
   document.getElementById('createErr').textContent = '';
-  document.getElementById('previewUrl').textContent = '/t-report/report.html?id=___';
+  document.getElementById('previewUrl').textContent = '/report.html?type=' + REPORT_TYPE + '&id=___';
   op('mCreate');
 }
 
 document.getElementById('cId')?.addEventListener('input', function () {
   const v = this.value || '___';
-  document.getElementById('previewUrl').textContent = '/t-report/report.html?id=' + v;
+  document.getElementById('previewUrl').textContent =
+    '/report.html?type=' + REPORT_TYPE + '&id=' + encodeURIComponent(v);
 });
 
 async function createTeacher() {
