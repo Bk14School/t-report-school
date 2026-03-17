@@ -7,6 +7,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{--e1:#0c3b2e;--e2:#145a3e;--e3:#1a7a54;--e4:#22a06b;--e5:#57d9a3;--e6:#b3f5d4;--e7:#e3fcef;--e8:#f4fdf8;--g1:#6b4f17;--g2:#a67c2e;--g3:#d4a843;--g4:#f0c75e;--n1:#1a1d23;--n3:#464c57;--n4:#6b7280;--n5:#9ca3af;--n7:#e8ecf0;--n8:#f3f5f8;--n9:#fafbfc;--bg:#f7f9f8;--card:#fff;--shadow-sm:0 2px 8px rgba(12,59,46,.06);--shadow-md:0 8px 24px rgba(12,59,46,.08);--r:20px;--rs:12px;--ease:.3s cubic-bezier(.4,0,.2,1);--bounce:.5s cubic-bezier(.34,1.56,.64,1)}
+[data-theme="dark"]{--e1:#b3f5d4;--e2:#57d9a3;--e3:#22a06b;--e7:#0c3b2e;--e8:#0f2920;--n1:#e8ecf0;--n3:#9ca3af;--n4:#9ca3af;--n5:#6b7280;--n7:#2d3139;--n8:#22262d;--n9:#1a1d23;--bg:#12151a;--card:#1a1d23;--shadow-sm:0 2px 8px rgba(0,0,0,.2);--shadow-md:0 8px 24px rgba(0,0,0,.3)}
+[data-theme="dark"] .hero{background:#0a1f18}[data-theme="dark"] .hero h1{background:linear-gradient(135deg,var(--e5),var(--e6),var(--g4));-webkit-background-clip:text;background-clip:text}
+.theme-toggle{position:fixed;top:14px;right:14px;z-index:1001;width:40px;height:40px;border-radius:50%;border:1px solid var(--n7);background:var(--card);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;transition:var(--ease);box-shadow:var(--shadow-sm)}.theme-toggle:hover{transform:scale(1.1);box-shadow:var(--shadow-md)}
 *{margin:0;padding:0;box-sizing:border-box}body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--n1);line-height:1.8;font-size:15px;-webkit-font-smoothing:antialiased}::selection{background:var(--e6);color:var(--e1)}
 @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}@keyframes spin{to{transform:rotate(360deg)}}@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(34,160,107,.4)}70%{box-shadow:0 0 0 10px rgba(34,160,107,0)}}
 .hero{background:var(--e1);position:relative;overflow:hidden;min-height:220px}.hero-bg{position:absolute;inset:0;overflow:hidden}.hero-bg .orb{position:absolute;border-radius:50%;filter:blur(60px);opacity:.15}.orb-1{width:400px;height:400px;background:var(--e4);top:-100px;right:-50px;animation:float 8s ease infinite}.orb-2{width:300px;height:300px;background:var(--g3);bottom:-80px;left:-40px;animation:float 10s ease infinite 2s}.hero-pattern{position:absolute;inset:0;opacity:.04;background-image:repeating-linear-gradient(45deg,transparent,transparent 35px,rgba(255,255,255,.5) 35px,rgba(255,255,255,.5) 36px)}
@@ -29,6 +32,7 @@
 </head>
 <body>
 <div class="toast" id="toast"></div>
+<button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="สลับโหมดมืด/สว่าง">🌙</button>
 <a class="back-btn" href="index.html">← หน้าหลัก</a>
 
 <header class="hero">
@@ -127,6 +131,21 @@ function filterTeachers(){
 }
 
 function esc(s){if(!s)return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+
+// ═══════════ DARK MODE ═══════════
+function toggleTheme(){
+  const isDark=document.documentElement.getAttribute('data-theme')==='dark';
+  document.documentElement.setAttribute('data-theme',isDark?'':'dark');
+  document.getElementById('themeToggle').textContent=isDark?'🌙':'☀️';
+  localStorage.setItem('theme',isDark?'light':'dark');
+}
+(function(){
+  const saved=localStorage.getItem('theme');
+  if(saved==='dark'||((!saved)&&window.matchMedia('(prefers-color-scheme:dark)').matches)){
+    document.documentElement.setAttribute('data-theme','dark');
+    setTimeout(()=>{const b=document.getElementById('themeToggle');if(b)b.textContent='☀️'},0);
+  }
+})();
 </script>
 </body>
 </html>
