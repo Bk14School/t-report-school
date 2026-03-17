@@ -34,6 +34,7 @@
 .rcard-footer{display:flex;align-items:center;justify-content:space-between;padding:12px 22px;background:var(--n9);border-top:1px solid var(--n7)}.rcard-tag{font-size:11px;color:var(--n5);font-family:'Prompt',sans-serif}
 .rcard-arrow{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--e1),var(--e3));color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;transition:var(--bounce);box-shadow:0 4px 12px rgba(12,59,46,.2)}.rcard:hover .rcard-arrow{transform:translateX(4px) scale(1.1)}
 .rcard .del-badge{position:absolute;top:11px;right:11px;width:26px;height:26px;border-radius:50%;background:rgba(231,76,60,.9);color:#fff;border:2px solid #fff;font-size:13px;cursor:pointer;display:none;align-items:center;justify-content:center;transition:var(--ease);box-shadow:0 2px 8px rgba(0,0,0,.2);z-index:5}.del-badge:hover{transform:scale(1.15)}.admin-mode .rcard .del-badge{display:flex}
+.rcard .edit-badge{position:absolute;top:11px;right:42px;width:26px;height:26px;border-radius:50%;background:rgba(166,124,46,.9);color:#fff;border:2px solid #fff;font-size:12px;cursor:pointer;display:none;align-items:center;justify-content:center;transition:var(--ease);box-shadow:0 2px 8px rgba(0,0,0,.2);z-index:5}.edit-badge:hover{transform:scale(1.15)}.admin-mode .rcard .edit-badge{display:flex}
 
 /* Admin Panel */
 .admin-panel{display:none;background:var(--card);border-radius:var(--r);box-shadow:var(--shadow-md);border:1px solid var(--n7);margin-bottom:28px;overflow:hidden;animation:slideDown .4s ease}.admin-mode .admin-panel{display:block}
@@ -52,8 +53,8 @@
 .status-badge{display:inline-flex;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500;font-family:'Prompt',sans-serif}.status-active{background:var(--e7);color:var(--e1)}.status-pending{background:var(--g6);color:var(--g1)}.status-suspended{background:#fef2f2;color:var(--red)}
 .action-btns{display:flex;gap:5px;flex-wrap:wrap}.action-btns .btn{padding:6px 12px;font-size:11px;border-radius:var(--rx)}
 
-/* Checkbox toggle */
-.toggle-wrap{display:flex;align-items:center;justify-content:center}.toggle{position:relative;width:42px;height:24px;cursor:pointer}.toggle input{opacity:0;width:0;height:0}.toggle .slider{position:absolute;inset:0;background:#e74c3c;border-radius:24px;transition:var(--ease);box-shadow:inset 0 1px 3px rgba(0,0,0,.15)}.toggle .slider::before{content:'';position:absolute;width:18px;height:18px;border-radius:50%;background:#fff;left:3px;top:3px;transition:var(--ease);box-shadow:0 1px 4px rgba(0,0,0,.2)}.toggle .slider::after{content:'✕';position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:10px;color:rgba(255,255,255,.7)}.toggle input:checked+.slider{background:#22a06b;box-shadow:inset 0 1px 3px rgba(0,0,0,.1),0 0 8px rgba(34,160,107,.3)}.toggle input:checked+.slider::before{transform:translateX(18px)}.toggle input:checked+.slider::after{content:'✓';left:7px;right:auto}
+/* Checkbox toggle — red OFF / green ON */
+.toggle{position:relative;display:inline-block;width:46px;height:26px;cursor:pointer;vertical-align:middle}.toggle input{opacity:0;width:0;height:0;position:absolute}.toggle .slider{position:absolute;inset:0;background:#dc3545;border-radius:26px;transition:all .3s ease;box-shadow:0 2px 6px rgba(220,53,69,.3)}.toggle .slider::before{content:'';position:absolute;width:20px;height:20px;border-radius:50%;background:#fff;left:3px;top:3px;transition:all .3s ease;box-shadow:0 1px 4px rgba(0,0,0,.25)}.toggle input:checked+.slider{background:#22a06b;box-shadow:0 2px 8px rgba(34,160,107,.4)}.toggle input:checked+.slider::before{transform:translateX(20px)}
 
 /* Icon Picker */
 .icon-picker{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px}.icon-picker .ip-btn{width:38px;height:38px;border:2px solid var(--n7);border-radius:var(--rs);background:var(--n9);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:var(--ease);padding:0}.icon-picker .ip-btn:hover{border-color:var(--e4);background:var(--e7);transform:scale(1.1)}.icon-picker .ip-btn.active{border-color:var(--e4);background:var(--e7);box-shadow:0 0 0 3px rgba(34,160,107,.2);transform:scale(1.12)}
@@ -130,6 +131,17 @@
 <label>รหัสผ่าน</label><input type="password" id="atPw" value="1234" placeholder="1234">
 <div class="er" id="atErr"></div>
 <div class="mba"><button class="btn btn-ghost" onclick="cl('mAddTeacher')">ยกเลิก</button><button class="btn btn-primary" id="btnAddTeacher" onclick="adminCreateTeacher()"><span class="btn-text">สร้าง</span></button></div>
+</div></div>
+
+<!-- Edit Hub Modal -->
+<div class="ov" id="mEditHub"><div class="mb">
+<h3>✏️ แก้ไขรายละเอียด Hub</h3><p class="mdesc">เปลี่ยนชื่อ คำอธิบาย และไอคอน</p>
+<input type="hidden" id="ehSlug">
+<label>ชื่อรายงาน</label><input id="ehTitle" placeholder="ชื่อ Hub">
+<label>คำอธิบาย</label><textarea id="ehDesc" rows="2" placeholder="คำอธิบาย"></textarea>
+<label>ไอคอน</label><div class="icon-picker" id="ehIconPicker"></div>
+<div class="er" id="ehErr"></div>
+<div class="mba"><button class="btn btn-ghost" onclick="cl('mEditHub')">ยกเลิก</button><button class="btn btn-primary" id="btnEditHub" onclick="saveEditHub()"><span class="btn-text">บันทึก</span></button></div>
 </div></div>
 
 <header class="hero">
@@ -251,7 +263,7 @@ function renderGrid(){
   reportTypes.forEach((rt,i)=>{
     const icon=rt.icon||icons[i%icons.length];
     const date=rt.created?new Date(rt.created).toLocaleDateString('th-TH',{year:'numeric',month:'short'}):'';
-    h+='<a class="rcard" href="hub.html?type='+encodeURIComponent(rt.slug)+'" style="animation-delay:'+i*.06+'s"><button class="del-badge" onclick="event.preventDefault();event.stopPropagation();deleteRT(\''+esc(rt.slug)+'\',\''+esc(rt.title)+'\')">✕</button><div class="rcard-banner"></div><div class="rcard-body"><div class="rcard-icon">'+icon+'</div><h3>'+esc(rt.title)+'</h3><p>'+esc(rt.description||'')+'</p></div><div class="rcard-footer"><span class="rcard-tag">📁 '+esc(rt.slug)+(date?' · '+date:'')+'</span><div class="rcard-arrow">→</div></div></a>';
+    h+='<a class="rcard" href="hub.html?type='+encodeURIComponent(rt.slug)+'" style="animation-delay:'+i*.06+'s"><button class="edit-badge" onclick="event.preventDefault();event.stopPropagation();openEditHub(\''+esc(rt.slug)+'\')">✎</button><button class="del-badge" onclick="event.preventDefault();event.stopPropagation();deleteRT(\''+esc(rt.slug)+'\',\''+esc(rt.title)+'\')">✕</button><div class="rcard-banner"></div><div class="rcard-body"><div class="rcard-icon">'+icon+'</div><h3>'+esc(rt.title)+'</h3><p>'+esc(rt.description||'')+'</p></div><div class="rcard-footer"><span class="rcard-tag">📁 '+esc(rt.slug)+(date?' · '+date:'')+'</span><div class="rcard-arrow">→</div></div></a>';
   });
   if(!reportTypes.length)h='<div class="empty" style="grid-column:1/-1"><div class="empty-icon">📁</div><h3>ยังไม่มีประเภทรายงาน</h3><p>เข้าระบบผู้ดูแลเพื่อสร้าง</p></div>';
   document.getElementById('reportGrid').innerHTML=h;
@@ -405,6 +417,31 @@ async function deleteRT(slug,title){
     const j=await r.json();
     toast(j.status==='ok'?'🗑️ ลบแล้ว':'❌ '+j.message);load();
   }catch(e){toast('❌ '+e.message)}
+}
+
+function openEditHub(slug){
+  const rt=reportTypes.find(r=>r.slug===slug);if(!rt)return;
+  document.getElementById('ehSlug').value=slug;
+  document.getElementById('ehTitle').value=rt.title||'';
+  document.getElementById('ehDesc').value=rt.description||'';
+  document.getElementById('ehErr').textContent='';
+  buildHubIconPicker('ehIconPicker',rt.icon||'📋');
+  op('mEditHub');
+}
+async function saveEditHub(){
+  const slug=document.getElementById('ehSlug').value;
+  const title=document.getElementById('ehTitle').value.trim();
+  const desc=document.getElementById('ehDesc').value.trim();
+  const icon=getHubPickedIcon('ehIconPicker','📋');
+  if(!title){document.getElementById('ehErr').textContent='กรุณาใส่ชื่อ';return}
+  btnLoad('btnEditHub',true);
+  try{
+    const r=await fetch(API,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'update_report_type',slug,title,description:desc,icon,admin_password:adminPassword})});
+    const j=await r.json();
+    if(j.status==='ok'){cl('mEditHub');toast('✅ อัพเดต "'+title+'" แล้ว');load()}
+    else document.getElementById('ehErr').textContent=j.message;
+  }catch(e){document.getElementById('ehErr').textContent=e.message}
+  finally{btnLoad('btnEditHub',false)}
 }
 
 function openAddTeacher(){
