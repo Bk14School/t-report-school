@@ -21,6 +21,8 @@
 .loading{text-align:center;padding:80px 20px}.loading .spinner{width:40px;height:40px;border:3px solid var(--n7);border-top-color:var(--e4);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px}.loading p{color:var(--n4);font-family:'Prompt',sans-serif;font-size:14px}
 .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(30px);padding:12px 24px;border-radius:60px;font-family:'Prompt',sans-serif;font-size:13px;z-index:3000;opacity:0;transition:var(--bounce);pointer-events:none;background:var(--e1);color:#fff;box-shadow:0 16px 48px rgba(12,59,46,.1)}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .back-btn{position:fixed;top:14px;left:14px;z-index:1000;padding:9px 18px;border-radius:var(--rs);border:none;background:rgba(255,255,255,.1);backdrop-filter:blur(8px);color:#fff;font-family:'Prompt',sans-serif;font-size:12px;cursor:pointer;transition:var(--ease);display:flex;align-items:center;gap:5px;text-decoration:none}.back-btn:hover{background:rgba(255,255,255,.2);transform:translateX(-3px)}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.skel{border-radius:8px;background:linear-gradient(90deg,#e8ecf0 25%,#f3f5f8 50%,#e8ecf0 75%);background-size:200%;animation:shimmer 1.5s infinite}
 @media(max-width:768px){.hi{padding:36px 20px 32px}.mn{padding:20px 16px 60px}.grid{grid-template-columns:1fr}.toolbar{flex-direction:column}.search-box{min-width:100%}.stats{grid-template-columns:1fr 1fr}}
 @media(max-width:480px){.hi{padding:28px 14px 24px}.mn{padding:14px 10px 50px}.hero h1{font-size:20px}.tcard-top{padding:14px}.tcard-avatar{width:40px;height:40px;font-size:15px;border-radius:11px}.back-btn{top:8px;left:8px;padding:7px 12px;font-size:11px}}
 </style>
@@ -56,21 +58,51 @@ const REPORT_TYPE=(new URLSearchParams(window.location.search).get('type')||'').
 if(!REPORT_TYPE){document.body.innerHTML='<div style="text-align:center;padding:100px 20px"><h2 style="font-family:Prompt,sans-serif;color:#e74c3c">ไม่พบประเภทรายงาน</h2><p style="color:#6b7280;margin:16px 0">กรุณาระบุ ?type=t-report</p><a href="index.html" style="color:#22a06b;font-family:Prompt,sans-serif">← กลับหน้าหลัก</a></div>';throw new Error('No report_type');}
 
 let teachers=[];
+
+// ═══════════ CACHE LAYER ═══════════
+const CACHE_TTL=5*60*1000;
+function cacheGet(k){try{const r=sessionStorage.getItem('c_'+k);if(!r)return null;const{d,t}=JSON.parse(r);if(Date.now()-t>CACHE_TTL){sessionStorage.removeItem('c_'+k);return null}return d}catch{return null}}
+function cacheSet(k,d){try{sessionStorage.setItem('c_'+k,JSON.stringify({d,t:Date.now()}))}catch{}}
+
+// ═══════════ SKELETON LOADING ═══════════
+function showSkeleton(){
+  document.getElementById('teacherGrid').innerHTML=Array(6).fill('').map(()=>'<div class="tcard" style="pointer-events:none"><div class="tcard-top"><div class="skel" style="width:50px;height:50px;border-radius:14px;flex-shrink:0"></div><div style="flex:1"><div class="skel" style="height:16px;width:65%;margin-bottom:8px"></div><div class="skel" style="height:12px;width:40%"></div></div></div><div class="tcard-bottom"><div class="skel" style="height:12px;width:30%"></div><div class="skel" style="height:12px;width:60px"></div></div></div>').join('');
+  document.getElementById('loadingArea').innerHTML='';
+}
+
 document.addEventListener('DOMContentLoaded',load);
 
 async function load(){
-  document.getElementById('loadingArea').innerHTML='<div class="loading"><div class="spinner"></div><p>กำลังโหลด...</p></div>';
-  document.getElementById('teacherGrid').innerHTML='';document.getElementById('statsArea').innerHTML='';
+  const ck='teachers_'+REPORT_TYPE;
+  const cached=cacheGet(ck);
+  if(cached&&cached.teachers){
+    teachers=cached.teachers||[];
+    applyHeader(cached);
+    renderTeachers();
+    // fetch ใหม่เบื้องหลัง
+    fetchTeachersFresh(ck);
+    return;
+  }
+  showSkeleton();
+  await fetchTeachersFresh(ck);
+}
+
+function applyHeader(j){
+  const hs=j.hub_setting||j.hub_settings||{};
+  document.getElementById('schoolName').textContent=j.report_type?.title||REPORT_TYPE;
+  if(hs.school_name)document.getElementById('schoolSub').textContent=hs.school_name;
+  document.title=(j.report_type?.title||REPORT_TYPE)+' — '+(hs.school_name||'');
+  document.getElementById('statsArea').innerHTML='<div class="stat-card"><div class="stat-num">'+teachers.length+'</div><div class="stat-label">จำนวนครู</div></div>';
+}
+
+async function fetchTeachersFresh(ck){
   try{
     const r=await fetch(API+'?action=list_teachers&report_type='+encodeURIComponent(REPORT_TYPE),{redirect:'follow'});
     const j=await r.json();
     if(j.status==='ok'){
+      cacheSet(ck,j);
       teachers=j.teachers||[];
-      const hs=j.hub_setting||j.hub_settings||{};
-      document.getElementById('schoolName').textContent=j.report_type?.title||REPORT_TYPE;
-      if(hs.school_name)document.getElementById('schoolSub').textContent=hs.school_name;
-      document.title=(j.report_type?.title||REPORT_TYPE)+' — '+(hs.school_name||'');
-      document.getElementById('statsArea').innerHTML='<div class="stat-card"><div class="stat-num">'+teachers.length+'</div><div class="stat-label">จำนวนครู</div></div>';
+      applyHeader(j);
       renderTeachers();
     }else showErr(j.message||'โหลดไม่สำเร็จ');
   }catch(e){showErr(e.message)}
