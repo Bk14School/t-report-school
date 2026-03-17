@@ -64,7 +64,7 @@ body.editing .cn.editable-icon{cursor:pointer;position:relative}body.editing .cn
 <button class="back-btn" onclick="window.location.href='hub.html?type=' + encodeURIComponent(REPORT_TYPE)">← กลับหน้ารายชื่อครู</button>
 
 <!-- Password Modal -->
-<div class="ov" id="mPw"><div class="mb"><h3>🔐 เข้าสู่โหมดแก้ไข</h3><p class="mdesc">ใส่รหัสผ่านเพื่อแก้ไขข้อมูล</p><input type="password" id="iPw" placeholder="••••••" onkeydown="if(event.key==='Enter')chkPw()"><div class="er" id="ePw"></div><div class="mba"><button class="bc" onclick="cl('mPw')">ยกเลิก</button><button class="bu" id="btnChkPw" onclick="chkPw()">เข้าสู่โหมดแก้ไข</button></div></div></div>
+<div class="ov" id="mPw"><div class="mb"><h3>🔐 เข้าสู่โหมดแก้ไข</h3><p class="mdesc">ใส่รหัสผ่านเพื่อแก้ไขข้อมูล</p><input type="password" id="iPw" placeholder="••••••" onkeydown="if(event.key==='Enter')chkPw()"><div class="er" id="ePw"></div><div class="mba"><button class="bc" onclick="cl('mPw')">ยกเลิก</button><button class="bu" id="btnChkPw" onclick="chkPw()">เข้าสู่โหมดแก้ไข</button></div><div style="text-align:center;margin-top:14px"><button onclick="forgotPassword()" id="btnForgot" style="background:none;border:none;color:var(--e3);font-family:Prompt,sans-serif;font-size:13px;cursor:pointer;padding:6px 12px;border-radius:8px;transition:all .3s ease">🔑 ลืมรหัสผ่าน?</button></div></div></div>
 
 <!-- Settings Modal -->
 <div class="ov" id="mSt"><div class="mb" style="max-width:520px"><h3>⚙️ ตั้งค่ารายงาน</h3><p class="mdesc">แก้ไขข้อมูลหัวรายงานและการแสดงผล</p>
@@ -268,6 +268,26 @@ async function chkPw(){
       document.getElementById('ePw').textContent='รหัสผ่านไม่ถูกต้อง';document.getElementById('iPw').value=''}
   }catch(e){document.getElementById('ePw').textContent=e.message}
   finally{btn.classList.remove('loading');btn.disabled=false}
+}
+
+// ═══ FORGOT PASSWORD ═══
+async function forgotPassword(){
+  if(!confirm('ระบบจะสร้างรหัสผ่านใหม่แล้วส่งไปที่อีเมลที่ลงทะเบียนไว้\n\nต้องการดำเนินการ?'))return;
+  const btn=document.getElementById('btnForgot');
+  const orig=btn.innerHTML;
+  btn.innerHTML='⏳ กำลังส่ง...';btn.disabled=true;
+  try{
+    const r=await fetch(API,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'forgot_password',report_type:REPORT_TYPE,teacher_id:TEACHER_ID})});
+    const j=await r.json();
+    if(j.status==='ok'){
+      document.getElementById('ePw').style.color='var(--e3)';
+      document.getElementById('ePw').textContent='✅ ส่งรหัสใหม่ไปที่ '+j.email_hint+' แล้ว';
+    }else{
+      document.getElementById('ePw').style.color='var(--red)';
+      document.getElementById('ePw').textContent=j.message||'ไม่สามารถรีเซ็ตรหัสได้';
+    }
+  }catch(e){document.getElementById('ePw').textContent='❌ '+e.message}
+  finally{btn.innerHTML=orig;btn.disabled=false}
 }
 
 function enableEdit(){document.querySelectorAll('.ed').forEach(el=>el.contentEditable='true');document.querySelectorAll('.ic-key').forEach(el=>el.contentEditable='true')}
