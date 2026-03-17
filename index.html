@@ -104,7 +104,50 @@
 <div id="slugSuggestions" style="display:none;margin:-8px 0 12px;display:flex;flex-wrap:wrap;gap:6px"></div>
 <label>ไอคอน</label><div class="icon-picker" id="cIconPicker"></div>
 <label>คำอธิบาย</label><textarea id="cDesc" rows="2" placeholder="(ไม่บังคับ)"></textarea>
-<label>Template</label><select id="cTemplate"><option value="default">📋 รายงานผลการปฏิบัติงาน (ค่าเริ่มต้น)</option><option value="sar">📊 SAR ประเมินตนเอง</option><option value="lesson-plan">📝 แผนการจัดการเรียนรู้</option></select>
+<label>Template</label><select id="cTemplate">
+<optgroup label="📋 รายงาน/ประเมิน">
+<option value="default">📋 รายงานผลการปฏิบัติงาน</option>
+<option value="sar">📊 SAR ประเมินตนเอง</option>
+<option value="opa">📝 ข้อตกลงพัฒนางาน (PA)</option>
+<option value="eval-salary">💰 แบบประเมินเลื่อนเงินเดือน</option>
+<option value="research">🔬 วิจัยในชั้นเรียน</option>
+</optgroup>
+<optgroup label="🎯 แผน/พัฒนา">
+<option value="lesson-plan">📝 แผนการจัดการเรียนรู้</option>
+<option value="id-plan">🎯 แผนพัฒนาตนเอง (ID Plan)</option>
+<option value="portfolio">🏆 แฟ้มสะสมผลงาน (Portfolio)</option>
+</optgroup>
+<optgroup label="📁 โครงการ/กิจกรรม">
+<option value="project">📁 โครงการ/กิจกรรม</option>
+<option value="training">📚 รายงานการอบรม</option>
+<option value="meeting">📋 รายงานการประชุม</option>
+<option value="field-trip">🚌 ทัศนศึกษา</option>
+<option value="club">🎯 ชุมนุม/ชมรม</option>
+<option value="sport">🏅 กีฬา/แข่งขัน</option>
+<option value="stem">🧪 STEM/Active Learning</option>
+<option value="plc">👥 PLC ชุมชนแห่งการเรียนรู้</option>
+<option value="moral">🛡️ คุณธรรม จริยธรรม</option>
+</optgroup>
+<optgroup label="👤 ข้อมูลบุคคล">
+<option value="personnel">👤 ทะเบียนประวัติบุคลากร</option>
+<option value="student-profile">🧒 ข้อมูลนักเรียนรายบุคคล</option>
+<option value="student-care">🤝 ระบบดูแลช่วยเหลือนักเรียน</option>
+<option value="home-visit">🏠 รายงานเยี่ยมบ้าน</option>
+<option value="guidance">💬 ให้คำปรึกษา/แนะแนว</option>
+<option value="special-ed">♿ แผน IEP (การศึกษาเฉพาะบุคคล)</option>
+<option value="health">🩺 สุขภาพนักเรียน</option>
+</optgroup>
+<optgroup label="🏫 งานบริหาร">
+<option value="qa">✅ ประกันคุณภาพภายใน</option>
+<option value="budget">💰 รายงานงบประมาณ</option>
+<option value="schedule">📅 ตารางสอน</option>
+<option value="safety">🛡️ ความปลอดภัยในโรงเรียน</option>
+</optgroup>
+<optgroup label="📖 อื่นๆ">
+<option value="reading">📖 บันทึกรักการอ่าน</option>
+<option value="innovation">💡 นวัตกรรม/สื่อการสอน</option>
+</optgroup>
+</select>
 <div class="er" id="createErr"></div>
 <div class="mba"><button class="btn btn-ghost" onclick="cl('mCreate')">ยกเลิก</button><button class="btn btn-primary" id="btnCreateRT" onclick="createReportType()"><span class="btn-text">สร้าง</span></button></div>
 </div></div>
