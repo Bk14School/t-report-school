@@ -53,7 +53,10 @@
 .action-btns{display:flex;gap:5px;flex-wrap:wrap}.action-btns .btn{padding:6px 12px;font-size:11px;border-radius:var(--rx)}
 
 /* Checkbox toggle */
-.toggle-wrap{display:flex;align-items:center;justify-content:center}.toggle{position:relative;width:36px;height:20px;cursor:pointer}.toggle input{opacity:0;width:0;height:0}.toggle .slider{position:absolute;inset:0;background:var(--n6);border-radius:20px;transition:var(--ease)}.toggle .slider::before{content:'';position:absolute;width:16px;height:16px;border-radius:50%;background:#fff;left:2px;top:2px;transition:var(--ease);box-shadow:0 1px 3px rgba(0,0,0,.15)}.toggle input:checked+.slider{background:var(--e4)}.toggle input:checked+.slider::before{transform:translateX(16px)}
+.toggle-wrap{display:flex;align-items:center;justify-content:center}.toggle{position:relative;width:42px;height:24px;cursor:pointer}.toggle input{opacity:0;width:0;height:0}.toggle .slider{position:absolute;inset:0;background:#e74c3c;border-radius:24px;transition:var(--ease);box-shadow:inset 0 1px 3px rgba(0,0,0,.15)}.toggle .slider::before{content:'';position:absolute;width:18px;height:18px;border-radius:50%;background:#fff;left:3px;top:3px;transition:var(--ease);box-shadow:0 1px 4px rgba(0,0,0,.2)}.toggle .slider::after{content:'✕';position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:10px;color:rgba(255,255,255,.7)}.toggle input:checked+.slider{background:#22a06b;box-shadow:inset 0 1px 3px rgba(0,0,0,.1),0 0 8px rgba(34,160,107,.3)}.toggle input:checked+.slider::before{transform:translateX(18px)}.toggle input:checked+.slider::after{content:'✓';left:7px;right:auto}
+
+/* Icon Picker */
+.icon-picker{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px}.icon-picker .ip-btn{width:38px;height:38px;border:2px solid var(--n7);border-radius:var(--rs);background:var(--n9);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:var(--ease);padding:0}.icon-picker .ip-btn:hover{border-color:var(--e4);background:var(--e7);transform:scale(1.1)}.icon-picker .ip-btn.active{border-color:var(--e4);background:var(--e7);box-shadow:0 0 0 3px rgba(34,160,107,.2);transform:scale(1.12)}
 
 /* Modal */
 .ov{display:none;position:fixed;inset:0;z-index:2000;background:rgba(12,59,46,.3);backdrop-filter:blur(16px);align-items:center;justify-content:center;padding:20px}.ov.show{display:flex}
@@ -89,6 +92,7 @@
 <h3>📁 สร้างประเภทรายงานใหม่</h3><p class="mdesc">จะสร้างโฟลเดอร์ใน Drive อัตโนมัติ</p>
 <label>ชื่อรายงาน</label><input id="cTitle" placeholder="เช่น รายงานประเมินตนเอง (SAR)">
 <label>Slug (ภาษาอังกฤษ, ไม่เว้นวรรค)</label><input id="cSlug" placeholder="เช่น sar" oninput="this.value=this.value.replace(/[^a-zA-Z0-9_-]/g,'').toLowerCase()">
+<label>ไอคอน</label><div class="icon-picker" id="cIconPicker"></div>
 <label>คำอธิบาย</label><textarea id="cDesc" rows="2" placeholder="(ไม่บังคับ)"></textarea>
 <div class="er" id="createErr"></div>
 <div class="mba"><button class="btn btn-ghost" onclick="cl('mCreate')">ยกเลิก</button><button class="btn btn-primary" id="btnCreateRT" onclick="createReportType()"><span class="btn-text">สร้าง</span></button></div>
@@ -149,7 +153,7 @@
 <div class="ap-header">
 <div class="ap-title"><div class="dot"></div> แผงควบคุมผู้ดูแลระบบ</div>
 <div class="ap-actions">
-<button class="btn btn-sm" style="background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.15)" onclick="op('mCreate')">📁 สร้าง Hub ใหม่</button>
+<button class="btn btn-sm" style="background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.15)" onclick="openCreateHub()">📁 สร้าง Hub ใหม่</button>
 <button class="btn btn-sm" style="background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.15)" onclick="openAddTeacher()">👤 เพิ่มครู</button>
 <button class="btn btn-sm" style="background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.15)" onclick="openSettings()">⚙️ ตั้งค่า</button>
 <button class="btn btn-sm" style="background:rgba(255,255,255,.06);color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.08)" onclick="exitAdmin()">✕ ออก</button>
@@ -176,6 +180,14 @@ const API='https://script.google.com/macros/s/AKfycbzWU3DzJHBsMXXAtYU4E2wY_23iPX
 let reportTypes=[],hubSettings={},isAdmin=false,adminPassword='';
 let pendingUsers=[],allUsers=[],allHubs=[];
 const icons=['📋','📊','🔬','📝','📚','🎓','📐','🧪'];
+const HUB_ICONS=['📋','📊','🔬','📝','📚','🎓','📐','🧪','✅','⭐','🏫','👤','🤝','🛡️','📌','🖼️','📁','💡','📅','🏆','❤️','🌐','✍️','🔑','📄'];
+
+function buildHubIconPicker(containerId,defaultIcon){
+  const c=document.getElementById(containerId);if(!c)return;
+  c.innerHTML=HUB_ICONS.map(ic=>'<button type="button" class="ip-btn'+(ic===(defaultIcon||HUB_ICONS[0])?' active':'')+'" data-icon="'+ic+'" onclick="pickHubIcon(this)">'+ic+'</button>').join('');
+}
+function pickHubIcon(btn){btn.parentElement.querySelectorAll('.ip-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active')}
+function getHubPickedIcon(containerId,fallback){const a=document.querySelector('#'+containerId+' .ip-btn.active');return a?a.dataset.icon:(fallback||'📋')}
 
 document.addEventListener('DOMContentLoaded',load);
 
@@ -237,7 +249,7 @@ function renderGrid(){
   document.getElementById('loadArea').innerHTML='';
   let h='';
   reportTypes.forEach((rt,i)=>{
-    const icon=icons[i%icons.length];
+    const icon=rt.icon||icons[i%icons.length];
     const date=rt.created?new Date(rt.created).toLocaleDateString('th-TH',{year:'numeric',month:'short'}):'';
     h+='<a class="rcard" href="hub.html?type='+encodeURIComponent(rt.slug)+'" style="animation-delay:'+i*.06+'s"><button class="del-badge" onclick="event.preventDefault();event.stopPropagation();deleteRT(\''+esc(rt.slug)+'\',\''+esc(rt.title)+'\')">✕</button><div class="rcard-banner"></div><div class="rcard-body"><div class="rcard-icon">'+icon+'</div><h3>'+esc(rt.title)+'</h3><p>'+esc(rt.description||'')+'</p></div><div class="rcard-footer"><span class="rcard-tag">📁 '+esc(rt.slug)+(date?' · '+date:'')+'</span><div class="rcard-arrow">→</div></div></a>';
   });
@@ -363,15 +375,21 @@ async function toggleVis(tid,hub,checked){
   }catch(e){toast('❌ '+e.message)}
 }
 
+function openCreateHub(){
+  document.getElementById('cTitle').value='';document.getElementById('cSlug').value='';document.getElementById('cDesc').value='';
+  document.getElementById('createErr').textContent='';buildHubIconPicker('cIconPicker','📋');op('mCreate');
+}
+
 async function createReportType(){
   const title=document.getElementById('cTitle').value.trim();
   const slug=document.getElementById('cSlug').value.trim();
   const desc=document.getElementById('cDesc').value.trim();
+  const icon=getHubPickedIcon('cIconPicker','📋');
   if(!title){document.getElementById('createErr').textContent='กรุณาใส่ชื่อ';return}
   if(!slug||slug.length<2){document.getElementById('createErr').textContent='Slug ต้องมีอย่างน้อย 2 ตัว';return}
   btnLoad('btnCreateRT',true);
   try{
-    const r=await fetch(API,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'create_report_type',slug,title,description:desc,admin_password:adminPassword})});
+    const r=await fetch(API,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'create_report_type',slug,title,description:desc,icon,admin_password:adminPassword})});
     const j=await r.json();
     if(j.status==='ok'){cl('mCreate');toast('✅ สร้าง "'+title+'" แล้ว');load()}
     else document.getElementById('createErr').textContent=j.message;
