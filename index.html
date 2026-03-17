@@ -58,6 +58,8 @@
 
 /* Icon Picker */
 .icon-picker{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px}.icon-picker .ip-btn{width:38px;height:38px;border:2px solid var(--n7);border-radius:var(--rs);background:var(--n9);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:var(--ease);padding:0}.icon-picker .ip-btn:hover{border-color:var(--e4);background:var(--e7);transform:scale(1.1)}.icon-picker .ip-btn.active{border-color:var(--e4);background:var(--e7);box-shadow:0 0 0 3px rgba(34,160,107,.2);transform:scale(1.12)}
+/* Slug suggestions */
+.slug-chip{display:inline-flex;align-items:center;gap:4px;padding:5px 14px;border-radius:20px;font-family:'Prompt',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:var(--ease);border:1.5px solid var(--e5);background:var(--e8);color:var(--e1)}.slug-chip:hover{background:var(--e6);border-color:var(--e4);transform:translateY(-1px);box-shadow:var(--shadow-sm)}.slug-chip::before{content:'→';font-size:10px;opacity:.5}
 
 /* Modal */
 .ov{display:none;position:fixed;inset:0;z-index:2000;background:rgba(12,59,46,.3);backdrop-filter:blur(16px);align-items:center;justify-content:center;padding:20px}.ov.show{display:flex}
@@ -91,8 +93,9 @@
 <!-- Create Report Type Modal -->
 <div class="ov" id="mCreate"><div class="mb">
 <h3>📁 สร้างประเภทรายงานใหม่</h3><p class="mdesc">จะสร้างโฟลเดอร์ใน Drive อัตโนมัติ</p>
-<label>ชื่อรายงาน</label><input id="cTitle" placeholder="เช่น รายงานประเมินตนเอง (SAR)">
+<label>ชื่อรายงาน</label><input id="cTitle" placeholder="เช่น รายงานผลการปฏิบัติงาน, บุคลากรโรงเรียน" oninput="suggestSlugs()">
 <label>Slug (ภาษาอังกฤษ, ไม่เว้นวรรค)</label><input id="cSlug" placeholder="เช่น sar" oninput="this.value=this.value.replace(/[^a-zA-Z0-9_-]/g,'').toLowerCase()">
+<div id="slugSuggestions" style="display:none;margin:-8px 0 12px;display:flex;flex-wrap:wrap;gap:6px"></div>
 <label>ไอคอน</label><div class="icon-picker" id="cIconPicker"></div>
 <label>คำอธิบาย</label><textarea id="cDesc" rows="2" placeholder="(ไม่บังคับ)"></textarea>
 <div class="er" id="createErr"></div>
@@ -389,7 +392,91 @@ async function toggleVis(tid,hub,checked){
 
 function openCreateHub(){
   document.getElementById('cTitle').value='';document.getElementById('cSlug').value='';document.getElementById('cDesc').value='';
-  document.getElementById('createErr').textContent='';buildHubIconPicker('cIconPicker','📋');op('mCreate');
+  document.getElementById('createErr').textContent='';document.getElementById('slugSuggestions').innerHTML='';document.getElementById('slugSuggestions').style.display='none';
+  buildHubIconPicker('cIconPicker','📋');op('mCreate');
+}
+
+// ═══ SMART SLUG SUGGESTIONS ═══
+const THAI_SLUG_MAP=[
+  // รายงาน
+  {th:['รายงานผล','รายงานการปฏิบัติงาน','ผลการปฏิบัติงาน','รายงานผลงาน'],en:['t-report','work-report','performance']},
+  {th:['sar','ประเมินตนเอง','รายงานประเมินตนเอง'],en:['sar','self-assessment']},
+  {th:['แผนการสอน','แผนจัดการเรียนรู้','แผนการจัดการเรียนรู้'],en:['lesson-plan','teaching-plan']},
+  {th:['วิจัยในชั้นเรียน','วิจัย','งานวิจัย'],en:['research','classroom-research']},
+  {th:['แผนพัฒนาตนเอง','id-plan','พัฒนาตนเอง'],en:['id-plan','self-dev']},
+  {th:['เลื่อนเงินเดือน','ประเมินเงินเดือน','พิจารณาเลื่อน'],en:['salary-eval','promotion']},
+  {th:['แฟ้มสะสมผลงาน','portfolio','พอร์ตโฟลิโอ'],en:['portfolio','e-portfolio']},
+  // บุคลากร
+  {th:['บุคลากร','ทะเบียนบุคลากร','ข้อมูลบุคลากร'],en:['staff','personnel','hr-data']},
+  {th:['ครู','ข้อมูลครู','ทะเบียนครู'],en:['teacher-info','teachers']},
+  // แผน/โครงการ
+  {th:['โครงการ','แผนงาน','แผนปฏิบัติการ'],en:['project','action-plan','plan']},
+  {th:['ตารางสอน','ตาราง'],en:['schedule','timetable']},
+  {th:['ประกันคุณภาพ','QA'],en:['qa','quality']},
+  // ทั่วไป
+  {th:['กิจกรรม','กิจกรรมพัฒนา'],en:['activity','activities']},
+  {th:['ประชุม','รายงานการประชุม'],en:['meeting','meeting-report']},
+  {th:['อบรม','พัฒนาวิชาชีพ'],en:['training','workshop']},
+  {th:['นักเรียน','ข้อมูลนักเรียน'],en:['student','students']},
+  {th:['ผลสัมฤทธิ์','ผลการเรียน'],en:['achievement','grades']},
+  {th:['งบประมาณ','การเงิน'],en:['budget','finance']},
+  {th:['อาคารสถานที่','สิ่งแวดล้อม'],en:['facilities','building']},
+  {th:['ชุมชน','ความร่วมมือ'],en:['community','collab']},
+];
+
+function suggestSlugs(){
+  const title=document.getElementById('cTitle').value.trim().toLowerCase();
+  const box=document.getElementById('slugSuggestions');
+  if(!title||title.length<2){box.innerHTML='';box.style.display='none';return;}
+
+  const suggestions=new Set();
+
+  // 1) ตรวจคำไทยที่ตรงกับ mapping
+  THAI_SLUG_MAP.forEach(m=>{
+    m.th.forEach(t=>{
+      if(title.includes(t.toLowerCase()))m.en.forEach(e=>suggestions.add(e));
+    });
+  });
+
+  // 2) ถ้ามีภาษาอังกฤษในชื่อ ดึงมาใช้
+  const engParts=title.match(/[a-z0-9]+/gi);
+  if(engParts){
+    const joined=engParts.join('-').toLowerCase();
+    if(joined.length>=2)suggestions.add(joined);
+    engParts.forEach(p=>{if(p.length>=2)suggestions.add(p.toLowerCase())});
+  }
+
+  // 3) ตัดคำทั่วไป สร้าง abbreviation
+  const words=title.replace(/[()（）]/g,' ').split(/\s+/).filter(w=>w);
+  if(words.length>=2){
+    // ย่อจากตัวแรกของแต่ละคำอังกฤษ
+    const abbr=words.map(w=>{const m=w.match(/^[a-z]/i);return m?m[0]:''}).join('').toLowerCase();
+    if(abbr.length>=2)suggestions.add(abbr);
+  }
+
+  // 4) Fallback: ชื่อย่อจากคำยาว
+  const shortWords=['รายงาน','การ','ของ','ใน','และ','เพื่อ','ที่','ผล','ระบบ','งาน','แผน','สรุป'];
+  const keyWords=words.filter(w=>!shortWords.includes(w)&&w.length>1);
+  if(keyWords.length>0){
+    // หาคำสำคัญที่มีใน mapping
+    keyWords.forEach(kw=>{
+      THAI_SLUG_MAP.forEach(m=>{
+        m.th.forEach(t=>{if(t.includes(kw)||kw.includes(t))m.en.forEach(e=>suggestions.add(e))});
+      });
+    });
+  }
+
+  if(!suggestions.size){box.innerHTML='';box.style.display='none';return;}
+
+  // แสดงชิป
+  const arr=[...suggestions].slice(0,5);
+  box.innerHTML=arr.map(s=>'<span class="slug-chip" onclick="pickSlug(\''+s+'\')">'+s+'</span>').join('');
+  box.style.display='flex';
+}
+
+function pickSlug(s){
+  document.getElementById('cSlug').value=s;
+  document.getElementById('slugSuggestions').style.display='none';
 }
 
 async function createReportType(){
