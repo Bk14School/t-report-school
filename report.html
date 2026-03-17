@@ -11,7 +11,8 @@
 @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}@keyframes spin{to{transform:rotate(360deg)}}@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(34,160,107,.4)}70%{box-shadow:0 0 0 10px rgba(34,160,107,0)}}@keyframes scaleIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
 .reveal{opacity:0;transform:translateY(24px);transition:.6s cubic-bezier(.4,0,.2,1)}.reveal.visible{opacity:1;transform:translateY(0)}
 .toast{position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(30px);padding:14px 28px;border-radius:60px;font-family:'Prompt',sans-serif;font-size:14px;z-index:3000;opacity:0;transition:var(--bounce);pointer-events:none;background:var(--e1);color:#fff;box-shadow:var(--shadow-lg)}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-.fab{position:fixed;bottom:32px;right:32px;z-index:1000;width:60px;height:60px;border-radius:50%;border:none;background:linear-gradient(135deg,var(--e1),var(--e2));color:#fff;cursor:pointer;box-shadow:0 8px 32px rgba(12,59,46,.35);transition:var(--bounce);display:flex;align-items:center;justify-content:center;opacity:.1}.fab:hover{opacity:1;transform:scale(1.1) rotate(-8deg)}.fab svg{width:22px;height:22px}body.editing .fab{display:none}
+.fab{position:fixed;bottom:32px;right:32px;z-index:1000;width:60px;height:60px;border-radius:50%;border:none;background:linear-gradient(135deg,var(--e1),var(--e2));color:#fff;cursor:pointer;box-shadow:0 8px 32px rgba(12,59,46,.35);transition:var(--bounce);display:flex;align-items:center;justify-content:center;opacity:.7}.fab:hover{opacity:1;transform:scale(1.1) rotate(-8deg)}.fab svg{width:22px;height:22px}body.editing .fab{display:none}
+.autosave-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px;vertical-align:middle;transition:background .3s}.autosave-dot.saved{background:var(--e5)}.autosave-dot.saving{background:var(--g4);animation:pulse 1s infinite}.autosave-dot.error{background:var(--red)}
 .back-btn{position:fixed;top:16px;left:16px;z-index:1000;padding:10px 20px;border-radius:var(--rs);border:none;background:rgba(255,255,255,.1);backdrop-filter:blur(8px);color:#fff;font-family:'Prompt',sans-serif;font-size:13px;cursor:pointer;transition:var(--ease);display:flex;align-items:center;gap:6px}.back-btn:hover{background:rgba(255,255,255,.2);transform:translateX(-3px)}
 .ov{display:none;position:fixed;inset:0;z-index:2000;background:rgba(12,59,46,.3);backdrop-filter:blur(16px);align-items:center;justify-content:center;padding:20px}.ov.show{display:flex}
 .mb{background:var(--card);border-radius:24px;padding:36px;width:100%;max-width:460px;box-shadow:var(--shadow-lg);animation:scaleIn .35s var(--bounce);border:1px solid var(--n7);max-height:90vh;overflow-y:auto;-webkit-overflow-scrolling:touch}.mb h3{font-family:'Prompt',sans-serif;font-size:20px;font-weight:600;color:var(--e1);margin-bottom:4px}.mb .mdesc{font-size:13px;color:var(--n4);margin-bottom:24px}.mb label{font-size:10px;font-weight:600;color:var(--n3);display:block;margin-bottom:4px;letter-spacing:1px;text-transform:uppercase}.mb input,.mb select{width:100%;padding:12px 16px;border:2px solid var(--n7);border-radius:var(--rs);font-family:inherit;font-size:14px;outline:none;transition:var(--ease);margin-bottom:14px;background:var(--n9)}.mb input:focus,.mb select:focus{border-color:var(--e4);background:#fff;box-shadow:0 0 0 4px rgba(34,160,107,.1)}.mb .er{font-size:12px;color:var(--red);min-height:16px}.mba{display:flex;gap:10px;margin-top:8px;position:sticky;bottom:0;background:var(--card);padding-top:8px}.mba button{flex:1;padding:13px;border-radius:var(--rs);font-family:'Prompt',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:var(--ease);border:none}.bc{background:var(--n8);color:var(--n3)}.bc:hover{background:var(--n7)}.bu{background:linear-gradient(135deg,var(--e1),var(--e3));color:#fff}.bu:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}.bgo{background:linear-gradient(135deg,var(--g2),var(--g3));color:#fff}
@@ -109,7 +110,7 @@ body.editing .cn.editable-icon{cursor:pointer;position:relative}body.editing .cn
 </div></div>
 
 <!-- Edit Bar -->
-<div class="ebar"><div class="ebl"><div class="dot"></div>โหมดแก้ไข</div><div class="eba"><button class="bb bpl" onclick="openAddTab()">📂 เพิ่ม Tab</button><button class="bb bst" onclick="openSettings()">⚙️ ตั้งค่า</button><button class="bb bsv" id="btnSave" onclick="saveToSheet()">💾 บันทึก</button><button class="bb bex" onclick="exitEdit()">✕ ออก</button></div></div>
+<div class="ebar"><div class="ebl"><div class="dot"></div>โหมดแก้ไข <span id="autoSaveStatus" style="font-size:11px;opacity:.7;margin-left:8px"></span></div><div class="eba"><button class="bb bpl" onclick="openAddTab()">📂 เพิ่ม Tab</button><button class="bb bst" onclick="openSettings()">⚙️ ตั้งค่า</button><button class="bb bsv" id="btnSave" onclick="saveToSheet()">💾 บันทึก</button><button class="bb bex" onclick="exitEdit()">✕ ออก</button></div></div>
 
 <button class="fab" onclick="op('mPw')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
 
@@ -197,17 +198,60 @@ async function fetchReportFresh(ck){
   }catch(e){showError(e.message)}
 }
 
-async function saveToSheet(){
+// ═══ SAVE WITH RETRY ═══
+let _saveRetryCount=0;
+const MAX_RETRY=2;
+
+async function saveToSheet(isAutoSave){
   collect();
   const sv=document.getElementById('btnSave');
-  if(sv){sv.classList.add('loading');sv.disabled=true}
+  const status=document.getElementById('autoSaveStatus');
+  if(sv&&!isAutoSave){sv.classList.add('loading');sv.disabled=true}
+  if(status)status.innerHTML='<span class="autosave-dot saving"></span>กำลังบันทึก...';
   try{
     const r=await fetch(API,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'save_all',report_type:REPORT_TYPE,teacher_id:TEACHER_ID,password:teacherPassword,data:D})});
     const j=await r.json();
-    toast(j.status==='ok'?'💾 บันทึกเรียบร้อย':'❌ '+j.message);
-    if(j.status==='ok')cacheClear();
-  }catch(e){toast('❌ '+e.message)}
-  finally{if(sv){sv.classList.remove('loading');sv.disabled=false}}
+    if(j.status==='ok'){
+      _saveRetryCount=0;
+      cacheClear();
+      if(status)status.innerHTML='<span class="autosave-dot saved"></span>บันทึกแล้ว';
+      if(!isAutoSave)toast('💾 บันทึกเรียบร้อย');
+      // ลบ status หลัง 3 วินาที
+      setTimeout(()=>{if(status&&status.innerHTML.includes('บันทึกแล้ว'))status.innerHTML=''},3000);
+    }else{
+      if(status)status.innerHTML='<span class="autosave-dot error"></span>บันทึกไม่สำเร็จ';
+      if(!isAutoSave)toast('❌ '+j.message);
+    }
+  }catch(e){
+    _saveRetryCount++;
+    if(_saveRetryCount<=MAX_RETRY){
+      // retry อัตโนมัติ
+      if(status)status.innerHTML='<span class="autosave-dot saving"></span>ลองใหม่ ('+_saveRetryCount+'/'+MAX_RETRY+')...';
+      setTimeout(()=>saveToSheet(isAutoSave),2000*_saveRetryCount);
+      return;
+    }
+    if(status)status.innerHTML='<span class="autosave-dot error"></span>บันทึกไม่สำเร็จ — <a href="#" onclick="saveToSheet();return false" style="color:var(--g4);text-decoration:underline">ลองอีกครั้ง</a>';
+    if(!isAutoSave)toast('❌ '+e.message);
+    _saveRetryCount=0;
+  }finally{
+    if(sv&&!isAutoSave){sv.classList.remove('loading');sv.disabled=false}
+  }
+}
+
+// ═══ AUTO-SAVE (ทุก 45 วินาที) ═══
+let _autoSaveTimer=null;
+function startAutoSave(){
+  stopAutoSave();
+  _autoSaveTimer=setInterval(()=>{
+    if(document.body.classList.contains('editing')&&teacherPassword){
+      saveToSheet(true);
+    }
+  },45000);
+}
+function stopAutoSave(){
+  if(_autoSaveTimer){clearInterval(_autoSaveTimer);_autoSaveTimer=null}
+  const status=document.getElementById('autoSaveStatus');
+  if(status)status.innerHTML='';
 }
 
 async function uploadImage(b64,bid){
@@ -318,8 +362,8 @@ async function forgotPassword(){
   finally{btn.innerHTML=orig;btn.disabled=false}
 }
 
-function enableEdit(){document.querySelectorAll('.ed').forEach(el=>el.contentEditable='true');document.querySelectorAll('.ic-key').forEach(el=>el.contentEditable='true')}
-function exitEdit(){collect();saveToSheet();teacherPassword='';document.body.classList.remove('editing');render()}
+function enableEdit(){document.querySelectorAll('.ed').forEach(el=>el.contentEditable='true');document.querySelectorAll('.ic-key').forEach(el=>el.contentEditable='true');startAutoSave()}
+function exitEdit(){collect();saveToSheet();stopAutoSave();teacherPassword='';document.body.classList.remove('editing');render()}
 
 // ═══ BEFOREUNLOAD WARNING ═══
 window.addEventListener('beforeunload',function(e){if(document.body.classList.contains('editing')){e.preventDefault();e.returnValue='คุณมีข้อมูลที่ยังไม่ได้บันทึก ต้องการออกหรือไม่?'}});
